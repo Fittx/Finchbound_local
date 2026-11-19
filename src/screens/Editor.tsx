@@ -783,10 +783,9 @@ function PageModal({
         onApply={async (photos) => {
           setUploading(true);
           try {
-            const [square, card] = await Promise.all([
-              uploadHostImage(photos.polaroid),
-              uploadHostImage(photos.card),
-            ]);
+            // The server may allow only one image upload at a time.
+            const square = await uploadHostImage(photos.polaroid);
+            const card = await uploadHostImage(photos.card);
             setImage(square.url);
             setCardImage(card.url);
             setCrop(null);
