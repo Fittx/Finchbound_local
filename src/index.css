@@ -1,0 +1,312 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Indie+Flower&family=Work+Sans:wght@700&display=swap");
+@import "tailwindcss";
+
+/* Finchbound design tokens:
+   color / type / space / radius / elevation. */
+@theme {
+  --breakpoint-md: 52.125rem; /* 834 tablet */
+  --breakpoint-lg: 75rem; /* 1200 desktop layout, designed at 1440 */
+
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-crimson: #e63946;
+  --color-crimson-strong: #c92a37;
+  --color-crimson-wash: #fdeeef;
+  --color-gold: #f4a261;
+  --color-nest: #fdfbf7;
+  --color-linen: #ffffff;
+  --color-slate: #2b2d42;
+  --color-muted: #5c5f73;
+  --color-stroke: #8a8c9c;
+  --color-wash: #f4f0e8;
+  --color-wash-strong: #ebe5da;
+  --color-line: #ece7de;
+  --color-pine: #2f7d57;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --shadow-e1: 0 1px 2px rgb(43 45 66 / 0.06), 0 2px 6px rgb(43 45 66 / 0.06);
+  --shadow-e2: 0 4px 16px rgb(43 45 66 / 0.1);
+  --shadow-e3: 0 16px 40px rgb(43 45 66 / 0.18);
+  --shadow-e4: 0 24px 48px rgb(43 45 66 / 0.22);
+
+  --text-caption: 0.875rem;
+  --text-caption--line-height: 1.25rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+}
+
+/* Type scale: Display, H1, H2, Body, Caption. Weights 400 / 500 / 700 only. */
+@utility t-display {
+  font-size: 2.5rem;
+  line-height: 3rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  @media (width >= 52.125rem) {
+    font-size: 3rem;
+    line-height: 3.5rem;
+  }
+  @media (width >= 75rem) {
+    font-size: 3.5rem;
+    line-height: 4rem;
+  }
+}
+@utility t-h1 {
+  font-size: 1.75rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  @media (width >= 52.125rem) {
+    font-size: 2.25rem;
+    line-height: 2.75rem;
+  }
+}
+@utility t-h2 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  @media (width >= 52.125rem) {
+    font-size: 1.375rem;
+    line-height: 1.875rem;
+  }
+}
+@utility t-body {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+@utility t-caption {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+@layer base {
+  html {
+    background: var(--color-nest);
+    color: var(--color-slate);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-slate);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-gold);
+    color: var(--color-slate);
+  }
+}
+
+/* Canvas texture: flat feather-grid, editor and reader canvases only. */
+.canvas-grid {
+  background-color: var(--canvas-bg, #fdfbf7);
+  background-image:
+    linear-gradient(var(--canvas-line, #efe9de) 1px, transparent 1px),
+    linear-gradient(90deg, var(--canvas-line, #efe9de) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Ruled notebook lines, aligned to a 32px baseline. */
+.ruled {
+  background-image: linear-gradient(transparent 31px, var(--rule, #e5ddd0) 31px);
+  background-size: 100% 32px;
+}
+
+@keyframes fb-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fb-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fb-sheet {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fb-turn-next {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(-180deg);
+  }
+}
+@keyframes fb-turn-prev {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(180deg);
+  }
+}
+@keyframes fb-feather {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx, 0px), -320px) rotate(var(--rot, 40deg));
+  }
+}
+@keyframes fb-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+@keyframes fb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes fb-slide-in-right {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes fb-slide-in-left {
+  from {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes fb-highlight {
+  from {
+    background-color: #fdf0e3;
+  }
+  to {
+    background-color: #ffffff;
+  }
+}
+
+@utility anim-fade {
+  animation: fb-fade-in 200ms ease-out both;
+}
+@utility anim-spin {
+  animation: fb-spin 0.9s linear infinite;
+}
+@utility anim-rise {
+  animation: fb-rise 280ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: fb-fade-in 160ms ease-out both;
+  }
+  :where(.reduce-motion) & {
+    animation: fb-fade-in 160ms ease-out both;
+  }
+}
+@utility anim-sheet {
+  animation: fb-sheet 280ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: fb-fade-in 160ms ease-out both;
+  }
+  :where(.reduce-motion) & {
+    animation: fb-fade-in 160ms ease-out both;
+  }
+}
+@utility anim-highlight {
+  animation: fb-highlight 2.4s ease-out both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+  :where(.reduce-motion) & {
+    animation: none;
+  }
+}
+@utility anim-pulse {
+  animation: fb-pulse 1.4s ease-in-out infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+  :where(.reduce-motion) & {
+    animation: none;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Compact reader controls keep their 44px targets at 320px. */
+@media (width < 360px) {
+  .reader-toolbar {
+    gap: 0;
+  }
+  .reader-toolbar .reader-prev,
+  .reader-toolbar .reader-next {
+    padding-inline: 8px;
+    gap: 4px;
+  }
+  .reader-count {
+    padding-inline: 4px;
+  }
+  .reader-feather {
+    display: none;
+  }
+}
+@media (height < 560px) and (orientation: landscape) {
+  .reader-landscape .reader-header {
+    height: 64px;
+  }
+  .reader-landscape .reader-main {
+    padding: 0 80px 72px;
+  }
+  .reader-landscape .reader-toolbar {
+    bottom: 8px;
+  }
+}
+
+/* Slate focus ring with a white outer line on dark surfaces. */
+.dark-surface-focus:focus-visible {
+  outline: 2px solid #2b2d42;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px white;
+}
+
+/* Preserve physical target and ring sizes inside scaled book artwork. */
+.book-control {
+  min-height: calc(44px / var(--book-scale, 1));
+  min-width: calc(44px / var(--book-scale, 1));
+}
+.book-control:focus-visible {
+  outline-width: calc(2px / var(--book-scale, 1));
+  outline-offset: calc(2px / var(--book-scale, 1));
+}

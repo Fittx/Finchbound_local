@@ -1,0 +1,58 @@
+# One origin for React, cookies, API, image delivery and SSE. No custom domain.
+services:
+  - type: web
+    name: finchbound-demo
+    runtime: node
+    plan: free
+    region: singapore
+    autoDeployTrigger: off
+    buildCommand: corepack pnpm install --frozen-lockfile --prod=false && corepack pnpm deploy:build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: SERVE_CLIENT
+        value: "true"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: MONGODB_DB_NAME
+        value: finchbound_demo
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: EMAIL_PROVIDER
+        value: brevo
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: STORAGE_PROVIDER
+        value: r2
+      - key: STORAGE_REGION
+        value: auto
+      - key: STORAGE_ENDPOINT
+        sync: false
+      - key: STORAGE_BUCKET
+        sync: false
+      - key: STORAGE_ACCESS_KEY_ID
+        sync: false
+      - key: STORAGE_SECRET_ACCESS_KEY
+        sync: false
+      - key: UPLOAD_CONCURRENCY
+        value: "1"
+      - key: UPLOAD_MAX_PIXELS
+        value: "16000000"
+      - key: TURNSTILE_SECRET
+        sync: false
+      - key: TURNSTILE_ACTION
+        value: guest-upload
+      - key: VITE_TURNSTILE_SITE_KEY
+        sync: false
+      - key: VITE_TURNSTILE_ACTION
+        value: guest-upload
