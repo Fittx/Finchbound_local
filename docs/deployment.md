@@ -164,6 +164,27 @@ R2's separate usage billing still applies.
 Local tests do not establish that provider credentials or Render's proxy work.
 Any failed hosted check must be resolved before sharing the demo link.
 
+### If startup fails
+
+Build success means compilation succeeded; the database and providers still need
+runtime configuration. Logs contain fixed startup checkpoints and a safe error
+code, never the raw driver error or connection URI.
+
+- `DATABASE_CONNECTION_FAILED`: check Atlas's Render outbound IP allowlist,
+  cluster availability and the URI hostname. This code alone does not establish
+  which of those is responsible.
+- `DATABASE_AUTHENTICATION_FAILED`: check the Atlas database username/password
+  and URI encoding. This is the database user, not the Atlas website login.
+- `DATABASE_PERMISSION_DENIED`: check the database user's privileges on
+  `finchbound_demo`, including creating collections and indexes.
+- `DATABASE_INDEX_CONFLICT`: inspect existing duplicate data or conflicting
+  indexes before changing them. Do not drop the database to retry startup.
+- `STARTUP_FILE_MISSING`: check the client build output and deployment root.
+- `NATIVE_DEPENDENCY_LOAD_FAILED`: check installation logs for bcrypt/Sharp.
+
+Send the checkpoint and diagnostic code for investigation. Do not paste the
+database URI, email API key or storage credentials.
+
 ## 5. Take it offline after one week
 
 1. Export any diary PDFs and back up any database records you want to keep.

@@ -8,6 +8,7 @@ import { createApp } from "./app.js";
 import { createDatabase } from "./config/db.js";
 import { ConfigurationError, parseEnv } from "./config/env.js";
 import { createLogger } from "./utils/logger.js";
+import { startupErrorCode } from "./utils/startupError.js";
 import { initializeAuthModels } from "./models/auth.js";
 import { initializeBookModels } from "./models/books.js";
 import { initializeUploadModels } from "./models/uploads.js";
@@ -22,11 +23,14 @@ export async function startServer(): Promise<Server> {
   const config = parseEnv();
   const logger = createLogger(config.LOG_LEVEL);
   // Fail before listening if installation is incomplete; never run partial auth.
+  logger.info("startup_dependencies_loading");
   await Promise.all([import("bcrypt"), import("jsonwebtoken"), import("nodemailer")]);
   const database = createDatabase(config);
   // No HTTP listener is opened until connection and transaction capability checks succeed.
+  logger.info("startup_database_connecting");
   await database.connect();
   try {
+    logger.info("startup_indexes_initializing");
     await initializeAuthModels();
     await initializeBookModels();
     await initializeUploadModels();
@@ -39,6 +43,7 @@ export async function startServer(): Promise<Server> {
   const streams = new AbortController();
   let server: Server;
   try {
+    logger.info("startup_client_initializing");
     server = createServer(
       createApp({
         config,
@@ -55,6 +60,7 @@ export async function startServer(): Promise<Server> {
   server.requestTimeout = config.REQUEST_TIMEOUT_MS;
   server.headersTimeout = Math.min(60000, config.REQUEST_TIMEOUT_MS);
   try {
+    logger.info("startup_http_listening");
     await new Promise<void>((done, reject) => {
       server.once("error", reject);
       server.listen(config.PORT, config.HOST, () => {
@@ -125,7 +131,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   void startServer().catch((error: unknown) => {
     const logger = createLogger();
     // ConfigurationError contains field names only. Other errors may contain DB credentials.
-    logger.error(error instanceof ConfigurationError ? error.message : "server_startup_failed");
+    if (error instanceof ConfigurationError) logger.error(error.message);
+    else logger.error("server_startup_failed", { code: startupErrorCode(error) });
     process.exitCode = 1;
   });
 }
