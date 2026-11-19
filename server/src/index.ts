@@ -1,6 +1,6 @@
 import { purgeDeleted } from "./jobs/purgeDeleted.js";
 import { createObjectStorage } from "./config/storage.js";
-import { createServer } from "node:http";
+import { createServer, type Server } from "node:http";
 import { loadEnvFile } from "node:process";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -13,7 +13,7 @@ import { initializeBookModels } from "./models/books.js";
 import { initializeUploadModels } from "./models/uploads.js";
 import { initializeGuestModels } from "./models/guests.js";
 
-export async function startServer() {
+export async function startServer(): Promise<Server> {
   try {
     loadEnvFile(resolve(process.cwd(), ".env"));
   } catch (error) {
@@ -37,7 +37,7 @@ export async function startServer() {
   }
   const storage = createObjectStorage(config);
   const streams = new AbortController();
-  let server: ReturnType<typeof createServer>;
+  let server: Server;
   try {
     server = createServer(
       createApp({
