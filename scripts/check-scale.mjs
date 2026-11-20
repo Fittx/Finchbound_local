@@ -36,6 +36,27 @@ for (const text of ['hello '.repeat(300), 'a'.repeat(600), 'one\\ntwo\\nthree', 
  assert.equal(parts.join(''),text);
  assert.ok(parts.every(part=>Array.from(part).length<=35));
 }
+const {flowPages}=await local('src/components/FlowBook.tsx');
+const note={id:'long',title:'A note',body:'A sentence with many words. '.repeat(80),author:'Ava'};
+const fit=(body,heading,author)=>body.length+(heading?25:0)+(author?20:0)<=200;
+const leaves=flowPages([note],fit);
+assert.ok(leaves.length>2);
+assert.equal(leaves.map(leaf=>leaf.body).join(''),note.body);
+assert.equal(leaves.filter(leaf=>leaf.heading).length,1);
+assert.equal(leaves.filter(leaf=>leaf.author).length,1);
+assert.equal(leaves.at(-1).author,'Ava');
+assert.ok(leaves.slice(0,-1).every(leaf=>leaf.continues));
+assert.equal(leaves.at(-1).continues,false);
+assert.ok(leaves.every(leaf=>fit(leaf.body,leaf.heading,leaf.author)));
+assert.ok(leaves.every(leaf=>leaf.body.length>0));
+assert.ok(leaves.slice(0,-1).every(leaf=>leaf.body.length>=140));
+const photographed=flowPages([{...note,image:'/photo.jpg'}],fit);
+assert.equal(photographed[0].kind,'photo');
+assert.ok(photographed.slice(1).every(leaf=>leaf.kind==='text'));
+assert.equal(photographed.slice(1).map(leaf=>leaf.body).join(''),note.body);
+assert.equal(flowPages([{...note,body:'',header:undefined,author:undefined,image:'/photo.jpg'}],fit).length,1);
+assert.ok(flowPages([note],(body,heading,author)=>body.length+(heading?25:0)+(author?20:0)<=400).length<leaves.length);
+for(let i=0;i<leaves.length-1;i++) assert.ok(/\\s$/.test(leaves[i].body)||/^\\s/.test(leaves[i+1].body));
 const {updateGuestDraft,startAnotherGuestDraft}=await local('src/screens/guest/guestDraft.ts');
 const revoked=[];const originalRevoke=URL.revokeObjectURL;URL.revokeObjectURL=url=>revoked.push(url);
 updateGuestDraft('draft-a',{photo:'blob:first'});updateGuestDraft('draft-a',{message:'retained'});
@@ -44,6 +65,16 @@ updateGuestDraft('draft-a',{photo:'blob:second'});assert.deepEqual(revoked,['blo
 updateGuestDraft('draft-b',{photo:'https://example.test/photo.jpg'});startAnotherGuestDraft('draft-b');assert.equal(revoked.length,1);
 startAnotherGuestDraft('draft-a');assert.deepEqual(revoked,['blob:first','blob:second']);URL.revokeObjectURL=originalRevoke;
 const {createElement}=await local('node_modules/react/index.js');const {renderToStaticMarkup}=await local('node_modules/react-dom/server.node.js');
+const {FlowSpread}=await local('src/components/FlowBook.tsx');
+const {PRESETS}=await local('src/data.ts');
+const look={theme:PRESETS.crimson.colors,font:'hand',lines:true};
+const paired=renderToStaticMarkup(createElement(FlowSpread,{look,leaves,index:1}));
+assert.equal((paired.match(/data-book-text-page/g)||[]).length,2);
+assert.ok(!paired.includes('<h3'));
+assert.ok(paired.includes('continued'));
+const last=renderToStaticMarkup(createElement(FlowSpread,{look,leaves:[leaves.at(-1)],index:0}));
+assert.equal((last.match(/data-book-text-page/g)||[]).length,1);
+assert.ok(!last.includes('grid-cols-2'));
 const {Button}=await local('src/ui.tsx');
 const primary=renderToStaticMarkup(createElement(Button,{},'Save'));
 assert.match(primary,/bg-crimson-strong/);assert.ok(primary.includes('hover:bg-[#A8222D]'));
@@ -82,7 +113,7 @@ exchange('DELETE','/account',{email:user.email},200,{ok:true});await deleteAccou
 exchange('POST','/auth/logout',undefined,204);await signOut();
 exchange('GET','/books',undefined,500,{error:{code:'SERVER',message:'Unavailable'}});
 await assert.rejects(()=>listBooks(),e=>e.code==='SERVER');
-console.log(JSON.stringify({result:'PASS',cropCases,checks:['moderation filters, cursor and counts','book and page HTTP filters, sort and cursor','crop ratios and bounds','account HTTP requests and conflict handling','cookie session sign-in and logout','password change and account deletion requests','API failure response','share URL routing','draft photo lifetime','primary contrast']},null,2));
+console.log(JSON.stringify({result:'PASS',cropCases,checks:['moderation filters, cursor and counts','book and page HTTP filters, sort and cursor','crop ratios and bounds','message page flow, word boundaries and sign-off','account HTTP requests and conflict handling','cookie session sign-in and logout','password change and account deletion requests','API failure response','share URL routing','draft photo lifetime','primary contrast']},null,2));
 `;
 fs.writeFileSync(path.join(temp, "test.mjs"), test);
 const result = spawnSync(

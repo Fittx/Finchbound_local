@@ -1,8 +1,9 @@
+import { FlowSpread, LeafContent, useFlowBook, useLeafSize, SPREAD_LEAF, type BookLeaf } from "../components/FlowBook";
 import { BookFeedback } from "../components/BookFeedback";
 import { listPages } from "../api/pages";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Home, X } from "lucide-react";
-import { useBookPages, NotebookPage, Polaroid, RightContent, Scaled, Spread, bookFont, useFlip } from "../book";
+import { NotebookPage, Scaled, bookFont, useFlip } from "../book";
 import { FeatherMark } from "../brand";
 import { PRESETS, type Book, type Page } from "../data";
 import { useApp } from "../store";
@@ -79,18 +80,24 @@ export function Reader() {
             ? "default"
             : "empty";
   const originalPages = useMemo(() => state === "default" && found ? found.pages : [], [state, found]);
-  const pages = useBookPages(originalPages, book);
-  const { index, setIndex, turn, go } = useFlip(pages.length, reduced);
+  const leafViewport = useRef<HTMLDivElement>(null);
+  const mobileSize = useLeafSize(leafViewport);
+  const singlePage = mobile && !landscape;
+  const leaves = useFlowBook(originalPages, book, singlePage ? mobileSize : SPREAD_LEAF);
+  const total = singlePage ? leaves.length : Math.ceil(leaves.length / 2);
+  const { index: rawIndex, setIndex, turn, go } = useFlip(total, reduced);
+  const index = Math.min(rawIndex, Math.max(0, total - 1));
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [dir, setDir] = useState<"next" | "prev">("next");
   const touch = useRef<number | null>(null);
 
   const nav = (d: "next" | "prev") => {
     setDir(d);
-    if (mobile) {
-      const to = d === "next" ? index + 1 : index - 1;
-      if (to >= 0 && to < pages.length) setIndex(to);
-    } else go(d);
+    const to = d === "next" ? index + 1 : index - 1;
+    if (to >= 0 && to < total) {
+      if (singlePage || rawIndex !== index) setIndex(to);
+      else go(d);
+    }
   };
 
   useEffect(() => {
@@ -109,7 +116,7 @@ export function Reader() {
       ? `color-mix(in srgb, ${book.theme.grid} 50%, ${book.theme.background})`
       : "#EFE9DE",
   };
-  const current = pages[index];
+  const current = leaves[index];
 
   return (
     <div
@@ -169,7 +176,7 @@ export function Reader() {
           ))}
         {state === "empty" &&
           (mobile && !landscape ? (
-            <MobilePage book={book} page={undefined} empty />
+            <MobilePage book={book} empty />
           ) : (
             <Scaled w={920} h={600} max={1.15} fitHeight>
               <EmptySpread book={book} />
@@ -178,7 +185,6 @@ export function Reader() {
         {state === "default" &&
           (mobile && !landscape ? (
             <div
-              key={index}
               className={cx("h-full", reduced ? "anim-fade" : "")}
               style={
                 reduced
@@ -190,21 +196,15 @@ export function Reader() {
             >
               <MobilePage
                 book={book}
-                page={current}
+                leaf={current}
+                viewportRef={leafViewport}
                 number={index + 1}
                 onOpen={() => setLightbox(index)}
               />
             </div>
           ) : (
             <Scaled w={920} h={600} max={1.2} fitHeight>
-              <Spread
-                look={book}
-                pages={pages}
-                index={index}
-                turn={turn}
-                reduced={reduced}
-                onOpen={(i) => setLightbox(i)}
-              />
+              <FlowSpread look={book} leaves={leaves} index={index} turn={turn} reduced={reduced} onOpen={i => setLightbox(i)} />
             </Scaled>
           ))}
       </main>
@@ -212,7 +212,8 @@ export function Reader() {
       {(state === "default" || state === "empty") && (
         <ReaderToolbar
           index={index}
-          total={Math.max(pages.length, 1)}
+          total={Math.max(total, 1)}
+          singlePage={singlePage}
           accent={book.theme.accent}
           onPrev={() => nav("prev")}
           onNext={() => nav("next")}
@@ -220,8 +221,8 @@ export function Reader() {
         />
       )}
 
-      {lightbox !== null && pages[lightbox]?.image && (
-        <Lightbox page={pages[lightbox]!} onClose={() => setLightbox(null)} />
+      {lightbox !== null && leaves[lightbox]?.source.image && (
+        <Lightbox page={leaves[lightbox]!.source} onClose={() => setLightbox(null)} />
       )}
     </div>
   );
@@ -235,7 +236,9 @@ export function ReaderToolbar({
   onNext,
   disabled,
   className,
+  singlePage,
 }: {
+  singlePage?: boolean;
   index: number;
   total: number;
   accent: string;
@@ -255,7 +258,7 @@ export function ReaderToolbar({
       <Button
         variant="ghost"
         className="reader-prev shrink-0 px-3 md:pr-4"
-        aria-label="Previous spread"
+        aria-label={singlePage ? "Previous page" : "Previous spread"}
         onClick={onPrev}
         disabled={disabled || index === 0}
         icon={<ChevronLeft className="size-5" aria-hidden="true" />}
@@ -267,12 +270,12 @@ export function ReaderToolbar({
         aria-live="polite"
       >
         <FeatherMark className="reader-feather size-4 shrink-0" color={accent} />
-        Spread {disabled ? 0 : index + 1} of {disabled ? 0 : total}
+        {singlePage ? "Page" : "Spread"} {disabled ? 0 : index + 1} of {disabled ? 0 : total}
       </span>
       <Button
         variant="ghost"
         className="reader-next shrink-0 px-3 md:pl-4"
-        aria-label="Next spread"
+        aria-label={singlePage ? "Next page" : "Next spread"}
         onClick={onNext}
         disabled={disabled || index >= total - 1}
         iconRight={<ChevronRight className="size-5" aria-hidden="true" />}
@@ -285,13 +288,15 @@ export function ReaderToolbar({
 
 function MobilePage({
   book,
-  page,
+  leaf,
+  viewportRef,
   number,
   onOpen,
   empty,
 }: {
   book: Book;
-  page?: Page;
+  leaf?: BookLeaf;
+  viewportRef?: import("react").RefObject<HTMLDivElement | null>;
   number?: number;
   onOpen?: () => void;
   empty?: boolean;
@@ -301,7 +306,7 @@ function MobilePage({
       className="mx-auto h-full max-h-[720px] w-full max-w-[440px] rounded-lg p-2 shadow-e3"
       style={{ background: book.theme.cover }}
     >
-      <div className="h-full overflow-hidden rounded-sm">
+      <div ref={viewportRef} className="h-full overflow-hidden rounded-sm">
         <NotebookPage look={book} feather number={number}>
           {empty ? (
             <div className="flex h-full flex-col justify-center pr-6 pl-16">
@@ -315,22 +320,7 @@ function MobilePage({
               </p>
             </div>
           ) : (
-            <div className="flex h-full flex-col">
-              {page?.image && (
-                <div className="flex shrink-0 justify-center pt-6 pr-6 pl-14">
-                  <Polaroid
-                    src={page.image}
-                    caption={page.caption || page.author}
-                    look={book}
-                    onOpen={onOpen}
-                    className="max-w-[min(128px,28vw)]"
-                  />
-                </div>
-              )}
-              <div className="min-h-0 flex-1">
-                <RightContent page={page} look={book} compact />
-              </div>
-            </div>
+            <LeafContent leaf={leaf} look={book} onOpen={onOpen} />
           )}
         </NotebookPage>
       </div>
