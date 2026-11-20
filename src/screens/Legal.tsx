@@ -42,16 +42,16 @@ const PRIVACY = [
   ],
   [
     "Storage and deletion",
-    "This prototype uses mock services and temporary browser state. Do not use it to store sensitive information. Account deletion is a demonstration of the intended permanent deletion flow.",
+    "Account details and book content are stored by the service. Photos are stored in private object storage and delivered according to book access settings. You can remove content or delete your account from Account.",
   ],
 ];
 export function Legal() {
   const { route } = useApp();
   const terms = route.path[0] === "terms";
-  const back = route.query.get("from") === "signup" ? "#/signup?return=terms" : "#/";
+  const back = route.query.get("from") === "signup" ? "/signup?return=terms" : "/";
   return (
     <div className="min-h-dvh bg-nest">
-      <TopBar home="#/" />
+      <TopBar home="/" />
       <Container className="py-8 md:py-12">
         <main className="mx-auto flex max-w-2xl flex-col gap-8">
           <a
@@ -62,10 +62,9 @@ export function Legal() {
           </a>
           <div className="flex flex-col gap-3">
             <h1 className="t-h1">{terms ? "Terms of service" : "Privacy policy"}</h1>
-            <p className="t-caption text-muted">Prototype draft · November 17, 2026</p>
+            <p className="t-caption text-muted">Updated November 20, 2026</p>
             <p className="t-body">
-              These pages describe the prototype experience. Final service policies will be provided
-              before launch.
+              These policies describe how Finchbound handles your account, books and contributions.
             </p>
           </div>
           {(terms ? TERMS : PRIVACY).map(([title, body]) => (

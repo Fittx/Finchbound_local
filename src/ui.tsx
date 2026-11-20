@@ -469,7 +469,7 @@ export function Select<T extends string>({
     setOpen(false);
   };
   return (
-    <div className="flex flex-col gap-2" ref={ref}>
+    <div className={cx("relative flex flex-col gap-2", open && "z-40")} ref={ref}>
       <span id={`${id}-l`} className="t-caption font-medium">
         {label}
       </span>
@@ -524,7 +524,7 @@ export function Select<T extends string>({
             id={`${id}-list`}
             role="listbox"
             aria-labelledby={`${id}-l`}
-            className="anim-fade absolute inset-x-0 top-full z-30 mt-2 rounded-md bg-linen p-1 shadow-e3"
+            className="anim-fade absolute inset-x-0 bottom-full z-50 mb-2 max-h-[min(256px,40dvh)] overflow-y-auto rounded-md bg-linen p-1 shadow-e3"
           >
             {options.map((o, i) => (
               <li

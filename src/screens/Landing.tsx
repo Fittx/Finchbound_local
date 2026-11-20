@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Pause, Play } from "lucide-react";
 import { IconConnect, IconCurate, IconFlock, Logo } from "../brand";
 import { Scaled, Spread, useFlip } from "../book";
-import { SEED_BOOKS } from "../data";
+import { PRESETS } from "../data";
 import { Container } from "../shell";
 import { useApp } from "../store";
 import { Button, ErrorState, Skeleton } from "../ui";
@@ -33,7 +33,7 @@ export function Landing() {
       <header>
         <Container className="flex h-16 items-center justify-between gap-2 md:h-20">
           <a
-            href="#/"
+            href="/"
             className="-ml-1 flex min-h-11 items-center rounded-sm px-1"
             aria-label="Finchbound home"
           >
@@ -107,7 +107,7 @@ export function Landing() {
   );
 }
 
-const SAMPLE = SEED_BOOKS[0]!;
+const SAMPLE = { theme: PRESETS.crimson.colors, font: "hand" as const, lines: true };
 const EMPTY_PAGES = [
   {
     id: "e1",
@@ -119,7 +119,7 @@ const EMPTY_PAGES = [
 /** Notebook that turns a page every few seconds. Pausable (WCAG 2.2.2). */
 function HeroPreview() {
   const { screenState, setScreenState, reduced } = useApp();
-  const pages = screenState === "empty" ? EMPTY_PAGES : SAMPLE.pages;
+  const pages = EMPTY_PAGES;
   const { index, setIndex, turn, go } = useFlip(pages.length, reduced);
   const [playing, setPlaying] = useState(true);
 
@@ -155,7 +155,7 @@ function HeroPreview() {
         <Spread look={SAMPLE} pages={pages} index={index} turn={turn} reduced={reduced} />
       </Scaled>
       <figcaption className="mt-4 flex items-center justify-between gap-4">
-        <span className="t-caption text-muted">A guestbook from Maya and Theo's wedding</span>
+        <span className="t-caption text-muted">Your photos and messages, gathered in a book</span>
         {pages.length > 1 && (
           <Button
             variant="ghost"

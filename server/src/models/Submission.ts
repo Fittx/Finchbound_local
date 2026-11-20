@@ -4,6 +4,7 @@ const schema = new Schema(
   {
     bookId: { type: Schema.Types.ObjectId, required: true },
     draftId: { type: String, required: true },
+    guestSignoff: { type: String, maxlength: LIMITS.personName },
     guestName: { type: String, default: "", maxlength: LIMITS.personName },
     guestEmail: { type: String, default: "", lowercase: true, maxlength: 254 },
     emailVerified: { type: Boolean, default: false, required: true },

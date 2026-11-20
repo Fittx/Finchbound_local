@@ -1,3 +1,4 @@
+import { BookFeedback } from "../components/BookFeedback";
 import { useSession } from "../api/session";
 import { useOwnedBook } from "../hooks/useOwnedBook";
 import { guestJoinUrl } from "../lib/routing";
@@ -59,7 +60,7 @@ export function Hub() {
     );
 
   const destination = guestJoinUrl(book.slug);
-  const url = `finchbound.com/${book.slug}`;
+  const url = destination.replace(/^https?:\/\//, "");
   return (
     <div className="min-h-dvh bg-nest">
       <TopBar>
@@ -73,7 +74,7 @@ export function Hub() {
       <main>
         <Container className="pt-6 pb-16 md:pt-8">
           <a
-            href="#/dashboard"
+            href="/dashboard"
             className="-ml-3 inline-flex min-h-11 items-center gap-2 rounded-md px-3 t-body font-medium hover:bg-wash"
           >
             <ArrowLeft className="size-5" aria-hidden="true" />
@@ -83,8 +84,8 @@ export function Hub() {
             <div className="flex min-w-0 flex-col gap-3">
               <h1 className="t-h1">{book.title}</h1>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="t-body break-all">{url}</span>
-                <CopyButton text={destination} compact label="Copy book link" />
+                <a className="flex min-h-11 items-center t-body break-all underline" href={`/reader/${book.slug}`}>{window.location.host}/reader/{book.slug}</a>
+                <CopyButton text={new URL(`/reader/${book.slug}`, window.location.href).href} compact label="Copy book link" />
               </div>
               <p className="flex items-start gap-2 t-caption text-muted">
                 <span className="mt-1.5">
@@ -138,17 +139,18 @@ export function Hub() {
                     <p className="t-body">Guests point their camera here to add a page.</p>
                   </div>
                   <div className="flex min-h-11 items-center justify-between gap-2 rounded-sm bg-wash pl-3">
-                    <span className="truncate t-caption">{url}/join</span>
+                    <span className="truncate t-caption">{url}</span>
                     <CopyButton text={destination} compact />
                   </div>
                   <Button full onClick={() => setInvite(true)}>
                     Create invitation card
                   </Button>
-                  <TextLink href={`#/${book.slug}/join`} className="self-center">
+                  <TextLink href={`/${book.slug}/join`} className="self-center">
                     Open guest page
                   </TextLink>
                 </div>
               </div>
+              <BookFeedback bookId={book.id} />
               <ReportsPanel mod={mod} />
             </aside>
 
@@ -197,7 +199,7 @@ function InviteModal({ book, onClose }: { book: Book; onClose: () => void }) {
   const [busy, setBusy] = useState(false);
   const qrRef = useRef<HTMLCanvasElement>(null);
   const destination = guestJoinUrl(book.slug);
-  const url = `finchbound.com/${book.slug}`;
+  const url = destination.replace(/^https?:\/\//, "");
   const ratio = contrast(bg, text);
   const low = ratio < 4.5;
   const f = FONTS[book.font];
@@ -250,7 +252,7 @@ function InviteModal({ book, onClose }: { book: Book; onClose: () => void }) {
       if (qrRef.current) ctx.drawImage(qrRef.current, 340, 590, 400, 400);
       ctx.fillStyle = text;
       ctx.font = `500 34px 'DM Sans', sans-serif`;
-      ctx.fillText(`${url}/join`, W / 2, 1090);
+      ctx.fillText(`${url}`, W / 2, 1090);
       ctx.font = `500 28px 'DM Sans', sans-serif`;
       ctx.fillText("Made with Finchbound", W / 2 + 22, 1272);
       const mw = ctx.measureText("Made with Finchbound").width;
@@ -365,7 +367,7 @@ function InviteModal({ book, onClose }: { book: Book; onClose: () => void }) {
               <div className="relative mt-auto rounded-sm bg-white p-3">
                 <QRCodeSVG value={destination} size={136} fgColor="#2B2D42" />
               </div>
-              <p className="relative mt-3 t-caption font-medium">{url}/join</p>
+              <p className="relative mt-3 t-caption font-medium">{url}</p>
               <p className="relative mt-auto flex items-center gap-2 pt-4 text-xs font-medium">
                 <LogoMark className="size-4" />
                 Made with Finchbound

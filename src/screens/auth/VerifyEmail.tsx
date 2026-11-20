@@ -57,7 +57,7 @@ export function VerifyEmail() {
       footer={
         <>
           <span>Wrong email?</span>
-          <TextLink href={changing ? "#/account" : "#/signup"}>Use a different email</TextLink>
+          <TextLink href={changing ? "/account" : "/signup"}>Use a different email</TextLink>
         </>
       }
     >

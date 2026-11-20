@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { BookFeedback } from "../components/BookFeedback";
+import { listPages } from "../api/pages";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Home, X } from "lucide-react";
-import { NotebookPage, Polaroid, RightContent, Scaled, Spread, bookFont, useFlip } from "../book";
+import { useBookPages, NotebookPage, Polaroid, RightContent, Scaled, Spread, bookFont, useFlip } from "../book";
 import { FeatherMark } from "../brand";
-import { SEED_BOOKS, type Book, type Page } from "../data";
+import { PRESETS, type Book, type Page } from "../data";
 import { useApp } from "../store";
 import { ApiError } from "../api/client";
-import { getPublicBook } from "../api/books";
+import { getBook, getPublicBook } from "../api/books";
 import { ExportBookButton } from "../components/ExportBookButton";
 import { ReaderError } from "./reader/ReaderError";
 import { Button, Spinner, cx } from "../ui";
@@ -32,7 +34,20 @@ export function Reader() {
     setReady(false);
     setUnavailable(false);
     setFound(undefined);
-    getPublicBook(route.path[1] ?? "")
+    const load = async () => {
+      const ownerId = route.query.get("preview");
+      if (!ownerId) return getPublicBook(route.path[1] ?? "");
+      const { book } = await getBook(ownerId);
+      const pages: Page[] = [];
+      let cursor: string | undefined;
+      do {
+        const batch = await listPages(ownerId, { cursor, limit: 50, sort: "position" });
+        pages.push(...batch.items);
+        cursor = batch.nextCursor ?? undefined;
+      } while (cursor);
+      return { book, pages };
+    };
+    load()
       .then(({ book, pages }) => {
         if (active) setFound({ ...book, pages });
       })
@@ -45,8 +60,11 @@ export function Reader() {
     return () => {
       active = false;
     };
-  }, [route.path[1], attempt]);
-  const book = found ?? SEED_BOOKS[0]!;
+  }, [route.path[1], route.query.get("preview"), attempt]);
+  const book: Book = found ?? { id: "", title: "", slug: "", kind: "personal", live: false,
+    visibility: "private", theme: PRESETS.crimson.colors, font: "sans", lines: true,
+    preset: "crimson", access: "name", photoRequired: false, messageRequired: false,
+    pages: [], entries: 0, updated: "" };
   const mobile = useMedia("(max-width: 833px)");
   const landscape = useMedia("(max-height: 559px) and (orientation: landscape)");
   // Only published, link-visible books; only spreads that are In book.
@@ -60,7 +78,8 @@ export function Reader() {
           : found.pages.length
             ? "default"
             : "empty";
-  const pages = state === "default" && found ? found.pages : [];
+  const originalPages = useMemo(() => state === "default" && found ? found.pages : [], [state, found]);
+  const pages = useBookPages(originalPages, book);
   const { index, setIndex, turn, go } = useFlip(pages.length, reduced);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [dir, setDir] = useState<"next" | "prev">("next");
@@ -76,7 +95,7 @@ export function Reader() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (lightbox !== null) return;
+      if (lightbox !== null || (e.target as HTMLElement)?.closest("button, input, textarea, [role=dialog]")) return;
       if (e.key === "ArrowRight") nav("next");
       if (e.key === "ArrowLeft") nav("prev");
     };
@@ -100,7 +119,7 @@ export function Reader() {
       )}
       style={canvasVars}
     >
-      <header className="reader-header relative flex h-20 shrink-0 items-center justify-center px-20 md:px-44">
+      <header className="reader-header relative flex h-20 shrink-0 items-center justify-center pr-32 pl-20 md:px-44">
         <Button
           variant="inverse"
           size="icon"
@@ -116,8 +135,9 @@ export function Reader() {
           </h1>
         )}
         {(state === "default" || state === "empty") && found && (
-          <div className="absolute right-4">
-            <ExportBookButton book={book} pages={pages} />
+          <div className="absolute right-4 flex items-center gap-2">
+            {!route.query.get("preview") && <BookFeedback slug={book.slug} />}
+            <ExportBookButton book={book} pages={originalPages} />
           </div>
         )}
       </header>
@@ -129,7 +149,7 @@ export function Reader() {
           if (touch.current === null) return;
           const dx = e.changedTouches[0]!.clientX - touch.current;
           touch.current = null;
-          if (Math.abs(dx) > 50) nav(dx < 0 ? "next" : "prev");
+          if (!(e.target as HTMLElement).closest("button, [role=dialog]") && Math.abs(dx) > 50) nav(dx < 0 ? "next" : "prev");
         }}
       >
         {state === "loading" && (
@@ -303,7 +323,7 @@ function MobilePage({
                     caption={page.caption || page.author}
                     look={book}
                     onOpen={onOpen}
-                    className="max-w-[min(220px,52vw)]"
+                    className="max-w-[min(128px,28vw)]"
                   />
                 </div>
               )}

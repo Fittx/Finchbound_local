@@ -1,3 +1,4 @@
+import { createFeedbackRouter } from "./routes/feedback.js";
 import { createAccountRouter } from "./routes/account.js";
 import { AccountService } from "./services/account.js";
 import { randomUUID } from "node:crypto";
@@ -87,6 +88,7 @@ export function createApp(options: {
   app.use("/api/account", createAccountRouter(config, auth, new AccountService(config, mailer)));
   app.use("/api/auth", createAuthRouter(config, auth));
   app.use("/api", createBookRouter(config, auth));
+  app.use("/api", createFeedbackRouter(config, auth));
   app.use("/api", createFeedRouter(config, auth, options.streamShutdown));
   app.use("/api", createModerationRouter(config, auth));
   app.use("/api", createGuestRouter(config, auth, new GuestService(config, mailer)));

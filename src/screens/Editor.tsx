@@ -1,3 +1,4 @@
+import { BookFeedback } from "../components/BookFeedback";
 import {
   useCallback,
   useEffect,
@@ -24,7 +25,7 @@ import { useOwnedBook } from "../hooks/useOwnedBook";
 import { ConfirmActionModal } from "../components/ConfirmActionModal";
 import { uploadHostImage } from "../api/uploads";
 import { useCursorList } from "../lib/useCursorList";
-import { PHOTOS, photo } from "../data";
+
 import {
   ArrowDown,
   ArrowLeft,
@@ -222,6 +223,7 @@ export function Editor() {
       cardImage: p.cardImage ?? "",
       caption: p.caption ?? "",
       header: p.header ?? "",
+      author: p.author ?? "",
     };
     try {
       if (editing === "new") {
@@ -278,6 +280,8 @@ export function Editor() {
               </span>
             </span>
           </div>
+          <BookFeedback bookId={book.id} />
+          <Button variant="secondary" onClick={() => navigate(`/reader/${book.slug}?preview=${book.id}`)}>Preview</Button>
           <ExportBookButton book={book} pages={pages} />
           <Button
             variant="secondary"
@@ -513,7 +517,7 @@ export function Editor() {
             <>
               <CopyButton
                 text={
-                  new URL("#/reader/" + encodeURIComponent(book.slug), window.location.href).href
+                  new URL("/reader/" + encodeURIComponent(book.slug), window.location.href).href
                 }
               />
               <Button onClick={() => navigate(`/reader/${book.slug}`)} data-autofocus>
@@ -744,11 +748,12 @@ function PageModal({
   const [image, setImage] = useState<string | undefined>(page?.image);
   const [cardImage, setCardImage] = useState<string | undefined>(page?.cardImage);
   const [crop, setCrop] = useState<string | null>(
-    variant.startsWith("crop") ? photo(PHOTOS.toast) : null,
+    null,
   );
   const [caption, setCaption] = useState(page?.caption ?? "");
   const [header, setHeader] = useState(page?.header ?? "");
   const [body, setBody] = useState(page?.body ?? "");
+  const [author, setAuthor] = useState(page?.author ?? "");
   const [tried, setTried] = useState(false);
   const [fileError, setFileError] = useState<string>();
   const [over, setOver] = useState(false);
@@ -820,7 +825,7 @@ function PageModal({
                 caption: image ? caption.trim() || undefined : undefined,
                 header: header.trim() || undefined,
                 body: body.trim(),
-                author: page?.author,
+                author: author.trim(),
                 submissionId: page?.submissionId,
               });
             }}
@@ -831,13 +836,15 @@ function PageModal({
       }
     >
       <div className="flex flex-col gap-6">
+        <Input label="Sign-off name (optional)" value={author} max={LIMITS.personName}
+          onChange={e => setAuthor(e.target.value)} placeholder="Name" helper="Leave blank to stay anonymous." />
         <Input
           label="Page title"
           value={title}
           max={LIMITS.pageTitle}
           onChange={(e) => setTitle(e.target.value)}
           error={titleError}
-          placeholder="The first toast"
+          placeholder="Page title"
         />
         <div className="flex flex-col gap-2">
           <span className="t-caption font-medium">Photo</span>
@@ -911,7 +918,7 @@ function PageModal({
               value={caption}
               max={LIMITS.photoCaption}
               onChange={(event) => setCaption(event.target.value)}
-              placeholder="A few words about this photo"
+              placeholder="Photo caption"
             />
           )}
           {fileError && (
@@ -932,7 +939,7 @@ function PageModal({
           value={header}
           max={LIMITS.messageHeader}
           onChange={(e) => setHeader(e.target.value)}
-          placeholder="To the two of you"
+          placeholder="Message header"
         />
         <Textarea
           label="Message"
@@ -940,7 +947,7 @@ function PageModal({
           max={LIMITS.message}
           rows={5}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Write the story behind this page"
+          placeholder="Write your message"
         />
       </div>
     </Modal>

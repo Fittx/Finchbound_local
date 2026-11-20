@@ -203,7 +203,7 @@ integration("auth with real MongoDB transactions, bcrypt and JWT", () => {
     await post("forgot-password", { email }).expect(429);
     await post("forgot-password", { email: "absent@gmail.com" }).expect(429);
     expect(inbox.filter((mail) => mail.url).every((mail) => mail.email === email)).toBe(true);
-    expect(inbox.find((mail) => mail.url)!.url).toContain(origin + "/#/reset-password?token=");
+    expect(inbox.find((mail) => mail.url)!.url).toContain(origin + "/reset-password?token=");
   });
 
   it("resets once, revokes all sessions, changes credentials and rejects replay", async () => {

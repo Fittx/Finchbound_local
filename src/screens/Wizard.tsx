@@ -274,7 +274,7 @@ export function Wizard() {
                 />
                 <Input
                   label={kind === "event" ? "Event title" : "Book title"}
-                  placeholder={kind === "event" ? "Maya & Theo's wedding" : "Summer in Lisbon"}
+                  placeholder="Book title"
                   value={title}
                   max={LIMITS.bookTitle}
                   onChange={(e) => setTitle(e.target.value)}
@@ -282,7 +282,7 @@ export function Wizard() {
                 />
                 <Input
                   label="Book link"
-                  prefix="finchbound.com/"
+                  prefix={`${window.location.host}/`}
                   value={effectiveSlug}
                   placeholder="your-book"
                   onChange={(e) => {
@@ -363,7 +363,7 @@ export function Wizard() {
           <div className="sticky top-16 flex h-[calc(100dvh-4rem)] flex-col justify-center gap-4 p-12">
             <LivePreview look={look} title={title} className="aspect-[4/3] w-full" />
             <p className="text-center t-caption text-muted">
-              Live preview · finchbound.com/{effectiveSlug || "your-book"}
+              Live preview · {window.location.host}/{effectiveSlug || "your-book"}
             </p>
           </div>
         </aside>

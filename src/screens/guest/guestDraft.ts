@@ -1,6 +1,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 
 export type GuestDraft = {
+  signoff?: string;
   name: string;
   email: string;
   photo?: string;

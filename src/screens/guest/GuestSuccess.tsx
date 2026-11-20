@@ -24,7 +24,7 @@ function Success({ event }: { event: GuestEvent }) {
       </div>
     );
   const pending = draft.result === "pending";
-  const { name, message, photo } = draft;
+  const { message, photo } = draft;
   const another = () => {
     startAnother();
     navigate(`/${event.slug}/join/form`);
@@ -56,10 +56,10 @@ function Success({ event }: { event: GuestEvent }) {
         </div>
         <GuestPagePreview
           event={event}
-          name={name}
+          name={draft.signoff ?? ""}
           photo={photo}
           message={message}
-          className="w-full max-w-[240px]"
+          className="w-full max-w-[360px]"
         />
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           {showReader ? (

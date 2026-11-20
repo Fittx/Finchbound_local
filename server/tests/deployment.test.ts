@@ -31,6 +31,11 @@ describe("single-origin deployment", () => {
     const html = await request(server).get("/").expect(200);
     expect(html.text).toContain("built client");
     expect(html.headers["cache-control"]).toBe("no-store");
+    for (const route of ["/dashboard", "/reader/my-book", "/my-event/join", "/terms"]) {
+      const deep = await request(server).get(route).expect(200);
+      expect(deep.text).toContain("built client");
+      expect(deep.headers["cache-control"]).toBe("no-store");
+    }
     const asset = await request(server).get("/assets/index-fingerprint.js").expect(200);
     expect(asset.headers["cache-control"]).toContain("immutable");
     await request(server).get("/api/health").expect(200, { ok: true });

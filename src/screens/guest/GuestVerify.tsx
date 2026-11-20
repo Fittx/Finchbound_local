@@ -55,6 +55,7 @@ function Verify({ event }: { event: GuestEvent }) {
       setStatus("adding");
       const r = await submitEntry(event, {
         name: draft.name,
+        signoff: draft.signoff ?? "",
         email,
         photo: draft.uploadId,
         message: draft.message,
@@ -186,7 +187,7 @@ function Verify({ event }: { event: GuestEvent }) {
               </Button>
             )}
           </p>
-          <TextLink href={`#/${event.slug}/join/form`}>Change email</TextLink>
+          <TextLink href={`/${event.slug}/join/form`}>Change email</TextLink>
         </div>
       </form>
     </div>

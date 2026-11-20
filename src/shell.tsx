@@ -14,7 +14,7 @@ export function Container({ children, className }: { children: ReactNode; classN
 
 export function TopBar({
   children,
-  home = "#/dashboard",
+  home = "/dashboard",
 }: {
   children?: ReactNode;
   home?: string;

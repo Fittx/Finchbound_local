@@ -13,6 +13,7 @@ export const guestConfirmBody = z.strictObject({
   code: z.string().regex(/^\d{6}$/),
 });
 export const guestEntryBody = z.strictObject({
+  signoff: z.string().trim().max(LIMITS.personName).optional(),
   name: z.string().trim().max(LIMITS.personName),
   email: z.union([z.literal(""), guestEmail]),
   photo: objectId.optional(),

@@ -14,7 +14,7 @@ export function NotFound() {
       <header>
         <Container className="flex h-16 items-center md:h-20">
           <a
-            href="#/"
+            href="/"
             className="-ml-1 flex min-h-11 items-center rounded-sm px-1"
             aria-label="Finchbound home"
           >
@@ -39,8 +39,8 @@ export function NotFound() {
                 >
                   Go to your books
                 </Button>
-                {book && <TextLink href={`#/reader/${book.slug}`}>Back to the book</TextLink>}
-                <TextLink href="#/">Go to the homepage</TextLink>
+                {book && <TextLink href={`/reader/${book.slug}`}>Back to the book</TextLink>}
+                <TextLink href="/">Go to the homepage</TextLink>
               </>
             }
           />

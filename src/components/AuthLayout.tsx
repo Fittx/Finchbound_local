@@ -21,7 +21,7 @@ export function AuthLayout({
       <header>
         <Container className="flex h-16 items-center md:h-20">
           <a
-            href="#/"
+            href="/"
             className="-ml-1 flex min-h-11 items-center rounded-sm px-1"
             aria-label="Finchbound home"
           >

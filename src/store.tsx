@@ -46,12 +46,14 @@ export const useApp = () => {
 };
 
 const parse = (): Route => {
-  const raw = window.location.hash.replace(/^#\/?/, "");
+  const raw = (window.location.pathname + window.location.search).replace(/^\//, "");
   const [p = "", q = ""] = raw.split("?");
   return { path: p.split("/").filter(Boolean), query: cleanRouteQuery(q, import.meta.env.DEV) };
 };
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  if (window.location.hash.startsWith("#/"))
+    window.history.replaceState(null, "", window.location.hash.slice(1));
   const [route, setRoute] = useState(parse);
   const [books, setBooks] = useState<Book[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -74,18 +76,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setScreenState((r.query.get("state") as ScreenState) || "default");
       window.scrollTo(0, 0);
     };
-    window.addEventListener("hashchange", onHash);
+    window.addEventListener("popstate", onHash);
+    const onLink = (event: MouseEvent) => {
+      const anchor = (event.target as Element).closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!anchor || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || anchor.target || anchor.hasAttribute("download")) return;
+      const url = new URL(anchor.href);
+      if (url.origin !== window.location.origin || !anchor.getAttribute("href")?.startsWith("/")) return;
+      event.preventDefault();
+      window.history.pushState(null, "", url.pathname + url.search);
+      onHash();
+    };
+    document.addEventListener("click", onLink);
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const onMq = () => setSystemReduced(mq.matches);
     mq.addEventListener("change", onMq);
     return () => {
-      window.removeEventListener("hashchange", onHash);
+      window.removeEventListener("popstate", onHash);
+      document.removeEventListener("click", onLink);
       mq.removeEventListener("change", onMq);
     };
   }, []);
 
   const navigate = useCallback((to: string) => {
-    window.location.hash = to;
+    window.history.pushState(null, "", to);
+    window.dispatchEvent(new PopStateEvent("popstate"));
   }, []);
 
   const dismissToast = useCallback(
@@ -161,7 +175,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
 }
 
-/** Simulated network: resolves after a delay unless the prototype forces a state. */
+/** Simulated network: resolves after a delay unless a development state is forced. */
 export function useSimulatedLoad(ms = 700, key: unknown = null) {
   const [ready, setReady] = useState(false);
   useEffect(() => {

@@ -87,7 +87,7 @@ export function Profile() {
   return (
     <div className="min-h-dvh bg-nest">
       <TopBar>
-        <a className="flex min-h-11 items-center rounded-sm px-3 hover:bg-wash" href="#/dashboard">
+        <a className="flex min-h-11 items-center rounded-sm px-3 hover:bg-wash" href="/dashboard">
           Your books
         </a>
       </TopBar>
@@ -171,7 +171,7 @@ export function Profile() {
           {loadStatus === "ready" && (
             <>
               <section className="flex flex-col gap-4 rounded-lg bg-linen p-6 shadow-e1">
-                <h2 className="t-h2">Security and plan</h2>
+                <h2 className="t-h2">Security</h2>
                 <Button
                   variant="secondary"
                   className="self-start"
@@ -179,10 +179,7 @@ export function Profile() {
                 >
                   Change password
                 </Button>
-                <div className="border-t border-line pt-4">
-                  <p className="t-caption text-muted">Your plan</p>
-                  <p className="t-body font-medium">{account?.plan}</p>
-                </div>
+
               </section>
               <section className="flex flex-col items-start gap-4 rounded-lg bg-linen p-6 shadow-e1">
                 <h2 className="t-h2">Account actions</h2>

@@ -7,7 +7,6 @@
   ],
   "type": "module",
   "scripts": {
-    "server:seed": "npm --prefix server run seed",
     "dev": "vite",
     "build": "vite build && node scripts/check-build.mjs",
     "deploy:build": "npm run typecheck && npm run server:typecheck && npm run build && npm run server:build",

@@ -1,3 +1,4 @@
+import { Feedback } from "../models/Feedback.js";
 import { trusted, Types, type ClientSession } from "mongoose";
 import { LIMITS } from "../../../shared/constants.js";
 import type { ObjectStorage } from "../config/storage.js";
@@ -23,6 +24,7 @@ const retired = {
 };
 export async function purgeBook(bookId: Types.ObjectId, session: ClientSession) {
   const scope = { bookId };
+  await Feedback.deleteMany(scope, { session });
   await Page.deleteMany(scope, { session });
   await Submission.deleteMany(scope, { session });
   await Report.deleteMany(scope, { session });

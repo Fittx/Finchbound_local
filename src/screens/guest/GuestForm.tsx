@@ -137,6 +137,7 @@ function Form({
       }
       const r = await submitEntry(event, {
         name: d.name,
+        signoff: d.signoff ?? "",
         email: d.email,
         message: d.message,
         photo,
@@ -197,7 +198,7 @@ function Form({
     );
 
   const previewNode = (
-    <GuestPagePreview event={event} name={draft.name} photo={draft.photo} message={draft.message} />
+    <GuestPagePreview event={event} name={draft.signoff ?? ""} photo={draft.photo} message={draft.message} />
   );
 
   return (
@@ -249,10 +250,11 @@ function Form({
           autoComplete="name"
           value={draft.name}
           maxLength={LIMITS.personName}
+          placeholder="Name"
           onChange={(e) => update({ name: e.target.value })}
           error={show("name")}
           disabled={status === "sending"}
-          helper="Shown with your page"
+          helper="Used by the event manager. Your sign-off below is shown in the book."
         />
         {needsEmail(event) && (
           <Input
@@ -266,6 +268,7 @@ function Form({
             helper="We'll send a code to confirm it. It's never shown in the book."
           />
         )}
+        <Input label="Sign-off name (optional)" value={draft.signoff ?? ""} maxLength={LIMITS.personName} onChange={e => update({ signoff: e.target.value })} placeholder="Name" helper="Leave blank to stay anonymous in the book." />
         <PhotoUpload
           label={event.photoRequired ? "Photo" : "Photo (optional)"}
           value={draft.photo}
@@ -285,7 +288,7 @@ function Form({
           onChange={(e) => update({ message: e.target.value })}
           error={show("message")}
           disabled={status === "sending"}
-          placeholder={`A few words for ${event.hosts}`}
+          placeholder="Write your message"
         />
 
         <div className="lg:hidden">

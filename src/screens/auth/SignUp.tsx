@@ -87,7 +87,7 @@ export function SignUp() {
       footer={
         <>
           <span>Already have an account?</span>
-          <TextLink href="#/signin">Sign in</TextLink>
+          <TextLink href="/signin">Sign in</TextLink>
         </>
       }
     >
@@ -103,7 +103,7 @@ export function SignUp() {
           <FormAlert
             ref={summary}
             title="You already have an account"
-            action={<TextLink href="#/signin">Sign in instead</TextLink>}
+            action={<TextLink href="/signin">Sign in instead</TextLink>}
           >
             Sign in with {email.trim()}, or use a different email.
           </FormAlert>
@@ -170,10 +170,10 @@ export function SignUp() {
             disabled={loading}
           />
           <div className="ml-8 flex flex-wrap gap-x-4 t-caption">
-            <TextLink href="#/terms?from=signup" onClick={rememberLegalDraft}>
+            <TextLink href="/terms?from=signup" onClick={rememberLegalDraft}>
               Terms of service
             </TextLink>
-            <TextLink href="#/privacy?from=signup" onClick={rememberLegalDraft}>
+            <TextLink href="/privacy?from=signup" onClick={rememberLegalDraft}>
               Privacy policy
             </TextLink>
           </div>

@@ -19,6 +19,7 @@ export type GuestEvent = {
 };
 
 export type GuestEntryRequest = {
+  signoff?: string;
   name: string;
   email: string;
   /** Upload id returned by POST /api/uploads/image. */

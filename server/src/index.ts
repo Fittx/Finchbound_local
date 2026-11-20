@@ -1,3 +1,4 @@
+import { Feedback } from "./models/Feedback.js";
 import { purgeDeleted } from "./jobs/purgeDeleted.js";
 import { createObjectStorage } from "./config/storage.js";
 import { createServer, type Server } from "node:http";
@@ -35,6 +36,7 @@ export async function startServer(): Promise<Server> {
     await initializeBookModels();
     await initializeUploadModels();
     await initializeGuestModels();
+    await Feedback.createIndexes();
   } catch (error) {
     await database.disconnect();
     throw error;

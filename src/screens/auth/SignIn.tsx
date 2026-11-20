@@ -82,7 +82,7 @@ export function SignIn() {
       footer={
         <>
           <span>New to Finchbound?</span>
-          <TextLink href="#/signup">Create an account</TextLink>
+          <TextLink href="/signup">Create an account</TextLink>
         </>
       }
     >
@@ -104,7 +104,7 @@ export function SignIn() {
             ref={alert}
             title="Verify your email"
             action={
-              <TextLink href={"#/verify-email?email=" + encodeURIComponent(verificationEmail)}>
+              <TextLink href={"/verify-email?email=" + encodeURIComponent(verificationEmail)}>
                 Enter verification code
               </TextLink>
             }
@@ -121,7 +121,7 @@ export function SignIn() {
           <FormAlert
             ref={alert}
             title="Account locked"
-            action={<TextLink href="#/forgot-password">Reset password</TextLink>}
+            action={<TextLink href="/forgot-password">Reset password</TextLink>}
           >
             Too many attempts. Try again in {LIMITS.lockMinutes} minutes, or reset your password
             now.
@@ -161,7 +161,7 @@ export function SignIn() {
             onChange={setRemember}
             disabled={busy}
           />
-          <TextLink href="#/forgot-password">Forgot password?</TextLink>
+          <TextLink href="/forgot-password">Forgot password?</TextLink>
         </div>
         <Button
           type="submit"

@@ -49,7 +49,7 @@ export function ProfileMenu({
         </span>
         <span className="hidden text-left md:block">
           <span className="block t-caption font-medium">{name}</span>
-          <span className="block t-caption text-muted">Unlimited books</span>
+
         </span>
         <ChevronDown className="size-4" aria-hidden="true" />
       </button>

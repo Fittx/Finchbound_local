@@ -90,7 +90,7 @@ export function ResetPassword() {
       <AuthLayout
         title="This link expired"
         description="Reset links work for 1 hour. Request a new one to continue."
-        footer={<TextLink href="#/signin">Back to sign in</TextLink>}
+        footer={<TextLink href="/signin">Back to sign in</TextLink>}
       >
         <Button size="lg" full onClick={() => navigate("/forgot-password")}>
           Request a new link
@@ -111,7 +111,7 @@ export function ResetPassword() {
     <AuthLayout
       title="Choose a new password"
       description="Use something you don't use on other sites."
-      footer={<TextLink href="#/signin">Back to sign in</TextLink>}
+      footer={<TextLink href="/signin">Back to sign in</TextLink>}
     >
       <form
         noValidate

@@ -313,12 +313,12 @@ export class ModerationService {
       const last = await Page.findOne({ bookId: book._id, deletedAt: null })
         .sort({ order: -1 })
         .session(session);
-      const author = entry.guestName || ANONYMOUS_GUEST;
+      const author = entry.guestSignoff ?? entry.guestName;
       const page = new Page({
         bookId: book._id,
         submissionId: entry._id,
         order: (last?.order ?? -1) + 1,
-        title: `From ${author}`.slice(0, LIMITS.pageTitle),
+        title: `From ${author || ANONYMOUS_GUEST}`.slice(0, LIMITS.pageTitle),
         author,
         body: entry.message,
         imageUrl: entry.photoUrl,

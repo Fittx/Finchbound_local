@@ -279,6 +279,7 @@ export class GuestService {
             bookId: book._id,
             draftId: grant.draftId,
             guestName: input.name,
+            ...(input.signoff !== undefined ? { guestSignoff: input.signoff } : {}),
             guestEmail: input.email,
             emailVerified: verified,
             fingerprint: grant.fingerprint!,

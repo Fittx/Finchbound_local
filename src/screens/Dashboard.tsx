@@ -1,3 +1,4 @@
+import { guestJoinUrl } from "../lib/routing";
 import { useCallback, useState } from "react";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { LoadMore } from "../components/LoadMore";
@@ -266,7 +267,8 @@ export function BookCard({
   onDelete: () => void;
   force?: Force;
 }) {
-  const href = book.kind === "event" ? `#/hub/${book.id}` : `#/editor/${book.id}`;
+  const { navigate } = useApp();
+  const href = book.kind === "event" ? `/hub/${book.id}` : `/editor/${book.id}`;
   return (
     <article
       data-loadmore-item
@@ -302,6 +304,7 @@ export function BookCard({
             className="relative z-10 -mt-2 -mr-2 md:hidden"
             label={`Actions for ${book.title}`}
             items={[
+              { label: "Preview", onSelect: () => navigate(`/reader/${book.slug}?preview=${book.id}`) },
               {
                 label: "Edit theme",
                 icon: <Palette className="size-5" aria-hidden="true" />,
@@ -322,7 +325,7 @@ export function BookCard({
         </div>
         <p className="flex items-center gap-2 t-caption text-muted">
           <Link2 className="size-4 shrink-0" aria-hidden="true" />
-          <span className="truncate">finchbound.com/{book.slug}</span>
+          <a className="relative z-10 flex min-h-11 min-w-0 items-center truncate underline" href={book.kind === "event" ? `/${book.slug}/join` : `/reader/${book.slug}`}>{book.kind === "event" ? guestJoinUrl(book.slug).replace(/^https?:\/\//, "") : `${window.location.host}/reader/${book.slug}`}</a>
         </p>
         <div className="flex flex-col gap-1 t-caption">
           <span className="flex items-center gap-2">
@@ -339,7 +342,8 @@ export function BookCard({
             })}
           </span>
         </div>
-        <div className="relative z-10 mt-auto hidden items-center gap-1 pt-2 md:-ml-3 md:flex">
+        <a href={`/reader/${book.slug}?preview=${book.id}`} className="relative z-10 flex min-h-11 items-center self-start rounded-sm px-3 font-medium underline">Preview</a>
+        <div className="relative z-10 mt-auto hidden flex-wrap items-center gap-1 pt-2 md:-ml-3 md:flex">
           <Button
             variant="ghost"
             className="px-3"
@@ -523,7 +527,7 @@ function SettingsModal({
         />
         <Input
           label="Book link"
-          prefix="finchbound.com/"
+          prefix={`${window.location.host}/`}
           value={slug}
           onChange={(e) => {
             setTaken(false);

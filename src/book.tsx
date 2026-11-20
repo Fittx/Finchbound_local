@@ -1,3 +1,4 @@
+import { paginateText } from "./lib/pagination";
 import {
   useEffect,
   useLayoutEffect,
@@ -216,60 +217,60 @@ export function RightContent({
   look: BookLook;
   compact?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const [overflows, setOverflows] = useState(false);
+  const [sheets, setSheets] = useState<string[]>([page?.body ?? ""]);
+  const [sheet, setSheet] = useState(0);
   const body = useRef<HTMLDivElement>(null);
-  const text = useRef<HTMLParagraphElement>(null);
-  useEffect(() => setExpanded(false), [page?.id]);
   useLayoutEffect(() => {
     const el = body.current;
-    const paragraph = text.current;
-    if (!el || !paragraph || expanded) return;
-    const measure = () =>
-      setOverflows(
-        paragraph.scrollHeight > paragraph.clientHeight + 1 ||
-          el.scrollHeight > el.clientHeight + 1,
-      );
+    if (!el || !page) return;
+    let alive = true;
+    const measure = () => {
+      if (!alive) return;
+      const probe = document.createElement("p");
+      const style = getComputedStyle(el);
+      Object.assign(probe.style, {
+        position: "fixed", visibility: "hidden", pointerEvents: "none",
+        width: `${el.clientWidth}px`, font: style.font, lineHeight: style.lineHeight,
+        whiteSpace: "pre-wrap", overflowWrap: "anywhere", margin: "0",
+      });
+      document.body.append(probe);
+      // Reserve room for the sign-off on every sheet, including long names.
+      probe.textContent = page.author ? `- ${page.author}` : "";
+      const available = Math.max(32, el.clientHeight - probe.getBoundingClientRect().height);
+      const result = paginateText(page.body, text => {
+        probe.textContent = text;
+        return probe.getBoundingClientRect().height <= available;
+      });
+      probe.remove();
+      setSheets(result.length ? result : [""]);
+      setSheet(0);
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
-    observer.observe(paragraph);
     document.fonts.ready.then(measure);
-    return () => observer.disconnect();
-  }, [page?.id, page?.body, expanded, look.font]);
+    return () => { alive = false; observer.disconnect(); };
+  }, [page?.id, page?.body, page?.author, look.font]);
   if (!page) return null;
   const { theme, font } = look;
   return (
-    <div
-      className={cx("flex size-full flex-col pr-8 pl-16", compact ? "pt-6 pb-12" : "pt-12 pb-16")}
-    >
-      <h3
-        style={{ ...bookFont(font, compact ? 24 : 28), lineHeight: "32px", color: theme.header }}
-        className="mb-8 shrink-0"
-      >
-        {page.header || page.title}
-      </h3>
-      <div
-        ref={body}
-        tabIndex={expanded ? 0 : undefined}
-        className={cx("min-h-0 flex-1", expanded ? "overflow-y-auto pr-2" : "overflow-hidden")}
-        style={{ ...bookFont(font, 18), lineHeight: "32px", color: theme.text }}
-      >
-        <p ref={text} className={cx(!expanded && (compact ? "line-clamp-4" : "line-clamp-8"))}>
-          {page.body}
-        </p>
-        {page.author && (expanded || !overflows) && <p className="mt-0">— {page.author}</p>}
+    <div className={cx("flex size-full flex-col pr-8 pl-16", compact ? "pt-4 pb-4" : "pt-12 pb-12")}>
+      <h3 style={{ ...bookFont(font, compact ? 24 : 28), lineHeight: "32px", color: theme.header }}
+        className="mb-4 shrink-0 break-words">{page.header || page.title}</h3>
+      <div ref={body} className="min-h-0 flex-1 overflow-hidden whitespace-pre-wrap break-words"
+        style={{ ...bookFont(font, 18), lineHeight: "32px", color: theme.text, overflowWrap: "anywhere" }}>
+        <p>{sheets[sheet]}</p>
+        {page.author && sheet === sheets.length - 1 && <p>- {page.author}</p>}
       </div>
-      {(overflows || expanded) && (
-        <button
-          type="button"
-          aria-expanded={expanded}
-          onClick={() => setExpanded((e) => !e)}
-          className="book-control mt-2 -ml-2 inline-flex min-h-11 shrink-0 items-center self-start rounded-sm px-2 font-sans t-caption font-medium text-slate underline decoration-2 underline-offset-4 hover:bg-white/60"
-        >
-          {expanded ? "Show less" : "View full message"}
-        </button>
-      )}
+      <div className="mt-2 flex h-11 shrink-0 items-center justify-between gap-2 font-sans t-caption" aria-label="Message pages">
+        {sheets.length > 1 && <>
+          <button type="button" className="book-control min-h-11 min-w-11 rounded-sm underline" disabled={!sheet}
+            onClick={() => setSheet(n => n - 1)}>Previous page</button>
+          <span role="status">{sheet + 1} / {sheets.length}</span>
+          <button type="button" className="book-control min-h-11 min-w-11 rounded-sm underline" disabled={sheet === sheets.length - 1}
+            onClick={() => setSheet(n => n + 1)}>Next page</button>
+        </>}
+      </div>
     </div>
   );
 }
@@ -479,4 +480,31 @@ export function FeatherBurst({ reduced, color = "#E63946" }: { reduced: boolean;
       ))}
     </div>
   );
+}
+
+/** Compile overflow into ordinary reader spreads; only the final continuation signs off. */
+export function useBookPages(pages: Page[], look: BookLook) {
+  const [compiled, setCompiled] = useState(pages);
+  useLayoutEffect(() => {
+    let active = true;
+    const compile = () => {
+      if (!active) return;
+      const probe = document.createElement("p");
+      Object.assign(probe.style, { position: "fixed", visibility: "hidden", width: "340px",
+        whiteSpace: "pre-wrap", overflowWrap: "anywhere", margin: "0",
+        ...bookFont(look.font, 18), fontSize: `${bookFont(look.font, 18).fontSize}px`, lineHeight: "32px" });
+      document.body.append(probe);
+      const next = pages.flatMap(page => {
+        const parts = paginateText(page.body, text => { probe.textContent = text; return probe.getBoundingClientRect().height <= 288; });
+        return parts.map((body, i) => ({ ...page, id: `${page.id}:sheet:${i}`, body,
+          header: i ? "Continued" : page.header,
+          image: i ? undefined : page.image, cardImage: i ? undefined : page.cardImage,
+          caption: i ? undefined : page.caption, author: i === parts.length - 1 ? page.author : undefined }));
+      });
+      probe.remove(); setCompiled(next);
+    };
+    compile(); document.fonts.ready.then(compile);
+    return () => { active = false; };
+  }, [pages, look.font]);
+  return compiled;
 }

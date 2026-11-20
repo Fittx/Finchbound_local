@@ -45,7 +45,7 @@ export function ForgotPassword() {
       <AuthLayout
         title="Check your email"
         description={`If an account exists for ${email.trim()}, we sent a link to reset your password.`}
-        footer={<TextLink href="#/signin">Back to sign in</TextLink>}
+        footer={<TextLink href="/signin">Back to sign in</TextLink>}
       >
         <div className="flex flex-col gap-5">
           <p className="flex flex-wrap items-center gap-x-1 t-body">
@@ -71,7 +71,7 @@ export function ForgotPassword() {
       footer={
         <>
           <span>Remembered it?</span>
-          <TextLink href="#/signin">Back to sign in</TextLink>
+          <TextLink href="/signin">Back to sign in</TextLink>
         </>
       }
     >

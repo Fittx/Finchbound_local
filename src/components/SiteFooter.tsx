@@ -2,8 +2,8 @@ import { Logo } from "../brand";
 import { Container } from "../shell";
 
 const LEGAL_LINKS = [
-  { href: "#/terms", label: "Terms of service" },
-  { href: "#/privacy", label: "Privacy policy" },
+  { href: "/terms", label: "Terms of service" },
+  { href: "/privacy", label: "Privacy policy" },
 ] as const;
 
 function LegalLinks() {
@@ -32,7 +32,7 @@ export function SiteFooter({ variant = "legal" }: { variant?: "full" | "legal" }
       {variant === "full" ? (
         <Container className="grid justify-items-center gap-2 py-6 text-center md:grid-cols-[auto_1fr_auto] md:items-center md:gap-6">
           <a
-            href="#/"
+            href="/"
             aria-label="Finchbound home"
             className="flex min-h-11 items-center rounded-sm md:justify-self-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate"
           >

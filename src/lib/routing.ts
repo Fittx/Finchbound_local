@@ -28,7 +28,8 @@ const NOT_FOUND = ["NotFound", "Page not found"] as const;
 export function guestJoinUrl(slug: string, base = window.location.href) {
   const url = new URL(base);
   url.search = "";
-  url.hash = `/${encodeURIComponent(slug)}/join`;
+  url.pathname = `/${encodeURIComponent(slug)}/join`;
+  url.hash = "";
   return url.href;
 }
 

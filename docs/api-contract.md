@@ -1,3 +1,15 @@
+## QA revision: clean routes, owner previews and feedback
+
+- Browser routes use paths (`/reader/:slug`, `/:slug/join`); legacy hash links migrate on opening. Express serves the app shell for extensionless client paths, while API and asset misses remain 404s.
+- My Books Preview uses authenticated book and cursor-paginated page reads. No publication or visibility setting is changed.
+- Book messages continue across reader spreads and measured preview sheets without scroll containers. PDF export receives original notes.
+- `GuestEntryRequest.signoff?: string` is independent of required guest identity. An explicit empty string requests no visible signature; older requests retain their existing name behavior.
+- `POST /api/public/books/:slug/feedback`: `{name?: string (80 max), message: string (1–1000)}` → 201 `{ok:true}`. Only published, link-visible books accept feedback. Five submissions per IP per hour; no owner contact details returned.
+- `GET /api/books/:bookId/feedback?cursor=:id`: owner-only, 20 messages per batch, `{items:[{id,name,message,createdAt}],nextCursor}`. Feedback is private, separate from book pages, and deleted with its book/account.
+- Removed client mock datasets and the sample-data seed command. Existing database records are not deleted by this code change.
+
+The following older implementation notes are historical and are superseded where they conflict with this revision.
+
 # Finchbound API contract
 
 The prototype's `src/api/` layer describes the Express + MongoDB backend. Each function

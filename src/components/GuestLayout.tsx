@@ -51,7 +51,7 @@ export function GuestLayout({
         {children}
       </main>
       <footer className="mx-auto flex w-full max-w-[1120px] flex-wrap items-center justify-between gap-2 px-4 pb-6 md:px-8">
-        <a href="#/" className="flex min-h-11 items-center gap-2 rounded-sm t-caption font-medium">
+        <a href="/" className="flex min-h-11 items-center gap-2 rounded-sm t-caption font-medium">
           <LogoMark className="size-5" />
           Made with Finchbound
         </a>

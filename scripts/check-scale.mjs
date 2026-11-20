@@ -28,8 +28,14 @@ const {getAccount,updateAccount,changePassword,deleteAccount}=await local('src/a
 const {signIn,signOut}=await local('src/api/auth.ts');
 const {guestJoinUrl,resolveRoute}=await local('src/lib/routing.ts');
 const shared=guestJoinUrl('summer-party','https://example.test/finchbound/?variant=old#/hub/b1');
-assert.equal(shared,'https://example.test/finchbound/#/summer-party/join');
-assert.equal(resolveRoute(new URL(shared).hash.slice(2).split('/'))[0],'GuestWelcome');
+assert.equal(shared,'https://example.test/summer-party/join');
+assert.equal(resolveRoute(new URL(shared).pathname.slice(1).split('/'))[0],'GuestWelcome');
+const {paginateText}=await local('src/lib/pagination.ts');
+for (const text of ['hello '.repeat(300), 'a'.repeat(600), 'one\\ntwo\\nthree', '\u{1f642}'.repeat(100), '']) {
+ const parts=paginateText(text, value=>Array.from(value).length<=35);
+ assert.equal(parts.join(''),text);
+ assert.ok(parts.every(part=>Array.from(part).length<=35));
+}
 const {updateGuestDraft,startAnotherGuestDraft}=await local('src/screens/guest/guestDraft.ts');
 const revoked=[];const originalRevoke=URL.revokeObjectURL;URL.revokeObjectURL=url=>revoked.push(url);
 updateGuestDraft('draft-a',{photo:'blob:first'});updateGuestDraft('draft-a',{message:'retained'});

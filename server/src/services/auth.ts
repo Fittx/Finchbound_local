@@ -287,7 +287,7 @@ export class AuthService {
     const result = await this.issueChallenge(email, "password-reset", token);
     if (result instanceof ApiError) throw result;
     if (result) {
-      const url = this.config.CLIENT_URL + "/#/reset-password?token=" + encodeURIComponent(token);
+      const url = this.config.CLIENT_URL + "/reset-password?token=" + encodeURIComponent(token);
       // Response timing/status is independent of SMTP delivery and account existence.
       this.backgroundEmail(() => this.mailer.sendPasswordReset(email, url));
     }

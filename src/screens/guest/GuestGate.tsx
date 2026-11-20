@@ -55,7 +55,7 @@ export function GuestGate({
         icon="nest"
         title="We couldn't find this guestbook"
         body="Check the link, or scan the code again."
-        actions={<TextLink href="#/">Go to Finchbound</TextLink>}
+        actions={<TextLink href="/">Go to Finchbound</TextLink>}
       />,
     );
 
@@ -103,7 +103,7 @@ export function GuestGate({
           event.readerAvailable ? (
             <Button onClick={() => navigate(`/reader/${event.slug}`)}>Read the book</Button>
           ) : (
-            <TextLink href="#/">Go to Finchbound</TextLink>
+            <TextLink href="/">Go to Finchbound</TextLink>
           )
         }
       />,

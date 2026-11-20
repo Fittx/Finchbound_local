@@ -1,11 +1,24 @@
-import { PRESETS, type Preset } from "../mocks/previews";
+export type Preset = {
+  values?: Record<string, string | boolean>;
+  submit?: boolean;
+  simulate?: string;
+  focus?: string;
+  photoError?: "too-large" | "wrong-type";
+  // Hub moderation frames
+  filter?: string;
+  query?: string;
+  withPhoto?: boolean;
+  select?: string[];
+  modal?: "reject" | "delete" | "bulk-reject" | "detail" | "block" | "remove";
+  /** Which entry a frame targets: "pending" (default), "approved", "long" or "reported". */
+  entry?: "pending" | "approved" | "long" | "reported";
+  run?: "add" | "reject";
+  cardError?: boolean;
+  scrollTo?: string;
+  // Dashboard and wizard frames
+  open?: string;
+  step?: number;
+};
 
-/**
- * Client-only (no HTTP). Returns the prefilled state for a design frame (?variant=),
- * or an empty preset. Delete with src/mocks once frames are no longer needed.
- */
-export function getPreset(screen: string, variant: string | null): Preset {
-  if (!import.meta.env.DEV) return {};
-  return (variant && PRESETS[screen]?.[variant]) || {};
-}
-export type { Preset };
+/** Legacy state hooks carry no prefilled data. */
+export function getPreset(_screen: string, _variant: string | null): Preset { return {}; }

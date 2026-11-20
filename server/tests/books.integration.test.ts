@@ -90,6 +90,19 @@ const get = async (id: string) => (await call("get", `/books/${id}`).expect(200)
 const publicGet = (slug: string) => request(app).get("/api/public/books/" + slug);
 
 describe.skipIf(!uri)("books and pages with real MongoDB transactions and sessions", () => {
+  it("persists private feedback and restricts inboxes and reader visibility", async () => {
+    const book = await create("feedback-book");
+    const send = () => request(app).post("/api/public/books/feedback-book/feedback").set("Origin", config.CLIENT_URL).send({ name: "Reader", message: "A lovely book" });
+    await send().expect(404);
+    await call("post", `/books/${book.id}/publish`).expect(200);
+    await send().expect(201);
+    const inbox = await call("get", `/books/${book.id}/feedback`).expect(200);
+    expect(inbox.body.items[0].message).toBe("A lovely book");
+    expect(inbox.body.items[0]).not.toHaveProperty("bookId");
+    await call("get", `/books/${book.id}/feedback`, outsider).expect(404);
+    await call("patch", `/books/${book.id}`).send({ visibility: "private" }).expect(200);
+    await send().expect(404);
+  });
   beforeAll(async () => {
     mongoose.set("sanitizeFilter", true);
     mongoose.set("strictQuery", true);

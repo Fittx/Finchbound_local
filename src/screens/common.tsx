@@ -6,7 +6,7 @@ export const fontOptions = (Object.keys(FONTS) as FontKey[]).map((k) => ({
   value: k,
   label: FONTS[k].name,
   preview: (
-    <span className="w-8 shrink-0 text-center" style={bookFont(k, 18)} aria-hidden="true">
+    <span className="w-8 shrink-0 text-center" aria-hidden="true">
       Aa
     </span>
   ),
