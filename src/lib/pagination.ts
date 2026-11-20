@@ -30,3 +30,11 @@ export function paginateText(text: string, fits: (text: string) => boolean): str
   }
   return result.length ? result : [""];
 }
+
+/** The counter describes real numbered pages, including the unpaired final page. */
+export function bookPageLabel(index: number, pageCount: number, singlePage = false) {
+  if (!pageCount) return "Page 0 of 0";
+  const first = (singlePage ? index : index * 2) + 1;
+  const last = Math.min(pageCount, first + (singlePage ? 0 : 1));
+  return first === last ? `Page ${first} of ${pageCount}` : `Pages ${first}\u2013${last} of ${pageCount}`;
+}

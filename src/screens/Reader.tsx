@@ -1,3 +1,4 @@
+import { bookPageLabel } from "../lib/pagination";
 import { FlowSpread, LeafContent, useFlowBook, useLeafSize, SPREAD_LEAF, type BookLeaf } from "../components/FlowBook";
 import { BookFeedback } from "../components/BookFeedback";
 import { listPages } from "../api/pages";
@@ -89,7 +90,7 @@ export function Reader() {
   const index = Math.min(rawIndex, Math.max(0, total - 1));
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [dir, setDir] = useState<"next" | "prev">("next");
-  const touch = useRef<number | null>(null);
+  const touch = useRef<{ x: number; y: number } | null>(null);
 
   const nav = (d: "next" | "prev") => {
     setDir(d);
@@ -102,9 +103,10 @@ export function Reader() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (lightbox !== null || (e.target as HTMLElement)?.closest("button, input, textarea, [role=dialog]")) return;
-      if (e.key === "ArrowRight") nav("next");
-      if (e.key === "ArrowLeft") nav("prev");
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || lightbox !== null ||
+        (e.target as HTMLElement)?.closest("input, textarea, select, [contenteditable=true], [role=combobox], [role=dialog]")) return;
+      if (e.key === "ArrowRight") { e.preventDefault(); nav("next"); }
+      if (e.key === "ArrowLeft") { e.preventDefault(); nav("prev"); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -151,12 +153,13 @@ export function Reader() {
 
       <main
         className="reader-main relative min-h-0 flex-1 px-4 pb-28 md:px-8"
-        onTouchStart={(e) => (touch.current = e.touches[0]!.clientX)}
+        onTouchStart={(e) => { touch.current = { x: e.touches[0]!.clientX, y: e.touches[0]!.clientY }; }}
         onTouchEnd={(e) => {
           if (touch.current === null) return;
-          const dx = e.changedTouches[0]!.clientX - touch.current;
+          const dx = e.changedTouches[0]!.clientX - touch.current.x;
+          const dy = e.changedTouches[0]!.clientY - touch.current.y;
           touch.current = null;
-          if (!(e.target as HTMLElement).closest("button, [role=dialog]") && Math.abs(dx) > 50) nav(dx < 0 ? "next" : "prev");
+          if (!(e.target as HTMLElement).closest("button, [role=dialog]") && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) nav(dx < 0 ? "next" : "prev");
         }}
       >
         {state === "loading" && (
@@ -204,7 +207,7 @@ export function Reader() {
             </div>
           ) : (
             <Scaled w={920} h={600} max={1.2} fitHeight>
-              <FlowSpread look={book} leaves={leaves} index={index} turn={turn} reduced={reduced} onOpen={i => setLightbox(i)} />
+              <FlowSpread onPrev={() => nav("prev")} onNext={() => nav("next")} look={book} leaves={leaves} index={index} turn={turn} reduced={reduced} onOpen={i => setLightbox(i)} />
             </Scaled>
           ))}
       </main>
@@ -214,6 +217,7 @@ export function Reader() {
           index={index}
           total={Math.max(total, 1)}
           singlePage={singlePage}
+          pageCount={leaves.length}
           accent={book.theme.accent}
           onPrev={() => nav("prev")}
           onNext={() => nav("next")}
@@ -237,7 +241,9 @@ export function ReaderToolbar({
   disabled,
   className,
   singlePage,
+  pageCount,
 }: {
+  pageCount?: number;
   singlePage?: boolean;
   index: number;
   total: number;
@@ -257,7 +263,7 @@ export function ReaderToolbar({
     >
       <Button
         variant="ghost"
-        className="reader-prev shrink-0 px-3 md:pr-4"
+        className="reader-prev shrink-0 px-3 md:pr-4 disabled:bg-wash disabled:opacity-40"
         aria-label={singlePage ? "Previous page" : "Previous spread"}
         onClick={onPrev}
         disabled={disabled || index === 0}
@@ -270,11 +276,11 @@ export function ReaderToolbar({
         aria-live="polite"
       >
         <FeatherMark className="reader-feather size-4 shrink-0" color={accent} />
-        {singlePage ? "Page" : "Spread"} {disabled ? 0 : index + 1} of {disabled ? 0 : total}
+        {bookPageLabel(index, disabled ? 0 : (pageCount ?? total), singlePage)}
       </span>
       <Button
         variant="ghost"
-        className="reader-next shrink-0 px-3 md:pl-4"
+        className="reader-next shrink-0 px-3 md:pl-4 disabled:bg-wash disabled:opacity-40"
         aria-label={singlePage ? "Next page" : "Next spread"}
         onClick={onNext}
         disabled={disabled || index >= total - 1}
