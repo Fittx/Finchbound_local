@@ -162,16 +162,23 @@ run(
   "api",
   npm,
   ["--prefix", "server", "run", "dev"],
-  lanIp ? { env: { ...process.env, CLIENT_URL: site } } : {},
+  // The PC itself can keep using 127.0.0.1 or localhost alongside the Wi-Fi address.
+  lanIp
+    ? {
+        env: {
+          ...process.env,
+          CLIENT_URL: site,
+          EXTRA_CLIENT_ORIGINS: "http://127.0.0.1:5173,http://localhost:5173",
+        },
+      }
+    : {},
 );
 run("web", npm, lanIp ? ["run", "dev", "--", "--host", "0.0.0.0"] : ["run", "dev"]);
 for (let i = 0; i < 60 && !((await open(3001)) && (await open(5173))); i++) await wait(1000);
 console.log("\n  Finchbound is running: " + site);
 if (lanIp) {
   console.log("  Phones on the same Wi-Fi: open " + site + " or scan a book's QR code.");
-  console.log(
-    "  Use this address on this PC too (not 127.0.0.1), or sign-in and saving will fail.",
-  );
+  console.log("  On this PC, http://127.0.0.1:5173 works too.");
   console.log("  If phones can't connect, allow Node.js on Private networks in Windows Firewall.");
 }
 console.log("  Press Ctrl+C to stop.\n");

@@ -51,14 +51,12 @@ export function createFeedbackRouter(config: Env, auth: AuthService): Router {
         .lean();
       const nextCursor = items.length > 20 ? String(items[19]!._id) : null;
       res.json({
-        items: items
-          .slice(0, 20)
-          .map((item) => ({
-            id: String(item._id),
-            name: item.name,
-            message: item.message,
-            createdAt: item.createdAt,
-          })),
+        items: items.slice(0, 20).map((item) => ({
+          id: String(item._id),
+          name: item.name,
+          message: item.message,
+          createdAt: item.createdAt,
+        })),
         nextCursor,
       });
     }),

@@ -69,10 +69,11 @@ export function createApp(options: {
       },
     }),
   );
+  const origins = [config.CLIENT_URL, ...config.EXTRA_CLIENT_ORIGINS];
   app.use(
     cors({
       origin(origin, callback) {
-        if (!origin || origin === config.CLIENT_URL) return callback(null, true);
+        if (!origin || origins.includes(origin)) return callback(null, true);
         callback(new ApiError("FORBIDDEN", "This origin is not allowed."));
       },
       credentials: true,
@@ -82,7 +83,7 @@ export function createApp(options: {
       maxAge: 600,
     }),
   );
-  app.use("/api", createApiRateLimit(config), requireTrustedOrigin(config.CLIENT_URL));
+  app.use("/api", createApiRateLimit(config), requireTrustedOrigin(origins));
   app.use(express.json({ limit: config.REQUEST_BODY_LIMIT_BYTES, strict: true, inflate: false }));
   const mailer = options.mailer ?? createAuthMailer(config);
   const auth = new AuthService(config, mailer, logger);

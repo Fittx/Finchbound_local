@@ -13,7 +13,7 @@ import { useApp } from "../../store";
 import { Button, Input } from "../../ui";
 import { errorCode } from "./usePreset";
 
-type ServerError = "unverified" | "credentials" | "locked" | "offline" | "server";
+type ServerError = "unverified" | "credentials" | "locked" | "offline" | "server" | "origin";
 
 export function SignIn() {
   const { route, navigate, toast } = useApp();
@@ -70,7 +70,9 @@ export function SignIn() {
             ? "credentials"
             : code === "OFFLINE"
               ? "offline"
-              : "server",
+              : code === "FORBIDDEN"
+                ? "origin"
+                : "server",
       );
       requestAnimationFrame(() => alert.current?.focus());
     }
@@ -136,6 +138,12 @@ export function SignIn() {
         {serverError === "server" && (
           <FormAlert ref={alert} title="Something went wrong">
             It's on our side. Try again in a moment.
+          </FormAlert>
+        )}
+        {serverError === "origin" && (
+          <FormAlert ref={alert} title="Wrong address for this server">
+            The server doesn't accept sign-ins from {window.location.origin}. Open Finchbound from
+            the address shown when the server started.
           </FormAlert>
         )}
         <Input

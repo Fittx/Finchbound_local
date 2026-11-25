@@ -38,6 +38,26 @@ export const envSchema = z
       .string()
       .refine(isOrigin, "Must be one HTTP(S) origin without a path or credentials")
       .transform((value) => new URL(value).origin),
+    /** Development only: more site addresses to trust, e.g. 127.0.0.1 when CLIENT_URL is the Wi-Fi address. */
+    EXTRA_CLIENT_ORIGINS: z
+      .string()
+      .default("")
+      .transform((value) =>
+        value
+          .split(",")
+          .map((origin) => origin.trim())
+          .filter(Boolean),
+      )
+      .pipe(
+        z
+          .array(
+            z
+              .string()
+              .refine(isOrigin, "Must be an HTTP(S) origin")
+              .transform((v) => new URL(v).origin),
+          )
+          .max(10),
+      ),
     MONGODB_URI: z
       .string()
       .min(1)
@@ -136,6 +156,13 @@ export const envSchema = z
     const smtpKeys = ["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM"] as const;
     const mailKeys =
       env.EMAIL_PROVIDER === "brevo" ? (["BREVO_API_KEY", "EMAIL_FROM"] as const) : smtpKeys;
+    if (env.NODE_ENV === "production" && env.EXTRA_CLIENT_ORIGINS.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["EXTRA_CLIENT_ORIGINS"],
+        message: "Extra origins are for development only",
+      });
+    }
     if (env.NODE_ENV === "production" && env.STORAGE_PROVIDER === "local") {
       ctx.addIssue({
         code: "custom",

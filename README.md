@@ -27,13 +27,13 @@ otherwise set `MONGOD_PATH`).
 
 ### The easy way: one command
 
-Double-click **`start-local.cmd`**, or run:
+After `corepack pnpm install` once, run:
 
 ```powershell
 npm run local
 ```
 
-It installs dependencies on the first run (`start-local.cmd` only), creates or completes
+It creates or completes
 `server/.env`, starts MongoDB on port 27018 as replica set `rs0` (data in `.local/mongo`,
 created on first run), then the API and the website. Open http://127.0.0.1:5173. Press Ctrl+C
 (or close the window) to stop everything it started.
@@ -47,10 +47,10 @@ npm run check:env
 
 ### Test on phones over your Wi-Fi
 
-Double-click **`start-local-network.cmd`**, or run `npm run local:lan`. It prints an address such
-as `http://192.168.1.7:5173`. Open that address on the PC **and** on phones connected to the
-same Wi-Fi (sign-in and saving only work from that address, not from 127.0.0.1 in this mode).
-Book links and QR codes in the Hub use that address, so guests can scan them with their phones.
+Run `npm run local:lan` (or the manual commands below). It prints an address such as
+`http://192.168.1.7:5173`. Open it on phones connected to the same Wi-Fi; on the PC both that
+address and http://127.0.0.1:5173 work. Book links and QR codes use the address you opened the
+Hub from, so open the Hub from the Wi-Fi address when guests will scan them.
 
 - If phones can't load the page, allow **Node.js** on **Private networks** when Windows Firewall
   asks (or in Windows Security > Firewall > Allow an app).
@@ -74,6 +74,17 @@ npm run dev
 ```
 
 Open http://127.0.0.1:5173. API health: http://127.0.0.1:3001/api/health.
+
+For phones on the same Wi-Fi, start windows 2 and 3 like this instead (replace the address
+with your PC's Wi-Fi IPv4 address from `ipconfig`), then open `http://<that address>:5173`:
+
+```powershell
+$env:CLIENT_URL="http://192.168.1.7:5173"; $env:EXTRA_CLIENT_ORIGINS="http://127.0.0.1:5173"; npm run server:dev
+```
+
+```powershell
+npm run dev -- --host 0.0.0.0
+```
 
 Locally, guests see a **Skip check (dev only)** button instead of Turnstile, and photos are
 saved in `server/.local/uploads`. Neither exists in a production build.
