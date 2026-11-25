@@ -11,7 +11,7 @@ import {
   type BookSummary,
 } from "../api/books";
 import { useCursorList } from "../lib/useCursorList";
-import { ArrowRight, Link2, Palette, Plus, Search, Settings, Trash2, X } from "lucide-react";
+import { ArrowRight, Eye, Link2, Palette, Plus, Search, Settings, Trash2, X } from "lucide-react";
 import { BookCover } from "../book";
 import { EmptyNest } from "../brand";
 import { type Access, type ThemeColors, type FontKey, slugify } from "../data";
@@ -20,6 +20,7 @@ import { useApp } from "../store";
 import {
   Button,
   ColorField,
+  CopyButton,
   ErrorState,
   Input,
   Modal,
@@ -270,16 +271,22 @@ export function BookCard({
 }) {
   const { navigate } = useApp();
   const href = book.kind === "event" ? `/hub/${book.id}` : `/editor/${book.id}`;
+  // Event books share the guest page; personal books share the reader.
+  const share = book.kind === "event" ? `/${book.slug}/join` : `/reader/${book.slug}`;
+  const shareLabel =
+    book.kind === "event"
+      ? guestJoinUrl(book.slug).replace(/^https?:\/\//, "")
+      : `${window.location.host}/reader/${book.slug}`;
   return (
     <article
       data-loadmore-item
       className={cx(
-        "group relative flex h-full flex-col overflow-hidden rounded-lg bg-linen shadow-e1 transition-shadow hover:shadow-e2",
+        "group relative flex h-full flex-col rounded-lg bg-linen shadow-e1 transition-shadow hover:shadow-e2",
         force === "hover" && "shadow-e2",
       )}
     >
       <div
-        className="flex h-48 items-center justify-center py-5 md:h-52"
+        className="flex h-48 items-center justify-center overflow-hidden rounded-t-lg py-5 md:h-52"
         style={{ background: book.theme.background }}
       >
         <BookCover
@@ -291,24 +298,28 @@ export function BookCard({
           )}
         />
       </div>
-      <div className="flex flex-1 flex-col gap-3 p-5">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="t-h2 min-w-0">
-            <a
-              href={href}
-              className="rounded-xs after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:outline-2 focus-visible:after:outline-slate focus-visible:after:outline-solid"
-            >
-              {book.title}
-            </a>
-          </h3>
+      {/* One consistent structure: title + menu, facts, share link, then the two main actions. */}
+      <div className="flex flex-1 flex-col gap-4 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-col gap-1">
+            <h3 className="t-h2 min-w-0 break-words">
+              <a
+                href={href}
+                className="rounded-xs after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:outline-2 focus-visible:after:outline-slate focus-visible:after:outline-solid"
+              >
+                {book.title}
+              </a>
+            </h3>
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 t-caption text-muted">
+              <Status live={book.live} />
+              <span aria-hidden="true">·</span>
+              <span>{book.kind === "event" ? "Event book" : "Personal book"}</span>
+            </p>
+          </div>
           <OverflowMenu
-            className="relative z-10 -mt-2 -mr-2 md:hidden"
-            label={`Actions for ${book.title}`}
+            className="relative z-20 -mt-1 -mr-2 shrink-0"
+            label={`More actions for ${book.title}`}
             items={[
-              {
-                label: "Preview",
-                onSelect: () => navigate(`/reader/${book.slug}?preview=${book.id}`),
-              },
               {
                 label: "Edit theme",
                 icon: <Palette className="size-5" aria-hidden="true" />,
@@ -320,70 +331,51 @@ export function BookCard({
                 onSelect: onSettings,
               },
               {
-                label: "Delete",
+                label: "Delete book",
                 icon: <Trash2 className="size-5" aria-hidden="true" />,
                 onSelect: onDelete,
+                danger: true,
               },
             ]}
           />
         </div>
-        <p className="flex items-center gap-2 t-caption text-muted">
-          <Link2 className="size-4 shrink-0" aria-hidden="true" />
-          <a
-            className="relative z-10 flex min-h-11 min-w-0 items-center truncate underline"
-            href={book.kind === "event" ? `/${book.slug}/join` : `/reader/${book.slug}`}
-          >
-            {book.kind === "event"
-              ? guestJoinUrl(book.slug).replace(/^https?:\/\//, "")
-              : `${window.location.host}/reader/${book.slug}`}
-          </a>
+        <p className="t-caption text-muted">
+          {book.kind === "event"
+            ? `${book.entries} ${book.entries === 1 ? "guest entry" : "guest entries"}`
+            : "Your pages"}{" "}
+          · Updated{" "}
+          {new Date(book.updated).toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })}
         </p>
-        <div className="flex flex-col gap-1 t-caption">
-          <span className="flex items-center gap-2">
-            <Status live={book.live} />
-            <span aria-hidden="true">·</span>
-            {book.kind === "event" ? "Event book" : "Personal book"}
-          </span>
-          <span className="text-muted">
-            {book.entries} {book.entries === 1 ? "entry" : "entries"} ·{" "}
-            {new Date(book.updated).toLocaleDateString(undefined, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
-          </span>
+        <div className="relative z-10 flex min-h-11 items-center gap-2 rounded-sm bg-wash pl-3">
+          <Link2 className="size-4 shrink-0 text-muted" aria-hidden="true" />
+          <a
+            className="min-w-0 flex-1 truncate t-caption underline-offset-4 hover:underline"
+            href={share}
+            title={shareLabel}
+          >
+            {shareLabel}
+          </a>
+          <CopyButton
+            text={new URL(share, window.location.href).href}
+            compact
+            label={book.kind === "event" ? "Copy guest link" : "Copy reader link"}
+          />
         </div>
-        <a
-          href={`/reader/${book.slug}?preview=${book.id}`}
-          className="relative z-10 flex min-h-11 items-center self-start rounded-sm px-3 font-medium underline"
-        >
-          Preview
-        </a>
-        <div className="relative z-10 mt-auto hidden flex-wrap items-center gap-1 pt-2 md:-ml-3 md:flex">
-          <Button
-            variant="ghost"
-            className="px-3"
-            icon={<Palette className="size-4" aria-hidden="true" />}
-            onClick={onTheme}
-          >
-            Edit theme
+        <div className="relative z-10 mt-auto flex gap-2 pt-1">
+          <Button className="flex-1" onClick={() => navigate(href)}>
+            {book.kind === "event" ? "Open hub" : "Edit pages"}
           </Button>
           <Button
-            variant="ghost"
-            className="px-3"
-            icon={<Settings className="size-4" aria-hidden="true" />}
-            onClick={onSettings}
+            variant="secondary"
+            className="flex-1"
+            icon={<Eye className="size-4" aria-hidden="true" />}
+            onClick={() => navigate(`/reader/${book.slug}?preview=${book.id}`)}
           >
-            Settings
-          </Button>
-          <Button
-            variant="ghost"
-            className="ml-auto px-3"
-            icon={<Trash2 className="size-4" aria-hidden="true" />}
-            onClick={onDelete}
-            aria-label={`Delete ${book.title}`}
-          >
-            <span className="lg:sr-only xl:not-sr-only">Delete</span>
+            Preview
           </Button>
         </div>
       </div>
@@ -399,7 +391,11 @@ export function BookCardSkeleton() {
         <Skeleton className="h-6 w-2/3" />
         <Skeleton className="h-4 w-1/2" />
         <Skeleton className="h-4 w-1/3" />
-        <Skeleton className="mt-2 h-11 w-full" />
+        <Skeleton className="h-11 w-full" />
+        <div className="mt-1 flex gap-2">
+          <Skeleton className="h-11 flex-1" />
+          <Skeleton className="h-11 flex-1" />
+        </div>
       </div>
     </div>
   );
@@ -473,7 +469,7 @@ export function QuickThemeModal({
   );
 }
 
-function SettingsModal({
+export function SettingsModal({
   book,
   onClose,
   onSaved,

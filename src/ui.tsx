@@ -580,6 +580,8 @@ export type MenuItem = {
   icon?: ReactNode;
   onSelect: () => void;
   disabled?: boolean;
+  /** Destructive action: shown last, in red, below a divider. */
+  danger?: boolean;
 };
 export function OverflowMenu({
   label,
@@ -625,9 +627,15 @@ export function OverflowMenu({
             if (e.key === "ArrowDown") (e.preventDefault(), els[(i + 1) % els.length]?.focus());
             if (e.key === "ArrowUp")
               (e.preventDefault(), els[(i - 1 + els.length) % els.length]?.focus());
+            if (e.key === "Escape") {
+              e.preventDefault();
+              setOpen(false);
+              ref.current?.querySelector<HTMLElement>("[aria-haspopup=menu]")?.focus();
+            }
+            if (e.key === "Tab") setOpen(false);
           }}
         >
-          {items.map((it) => (
+          {items.map((it, index) => (
             <button
               key={it.label}
               role="menuitem"
@@ -638,7 +646,11 @@ export function OverflowMenu({
                 setOpen(false);
                 it.onSelect();
               }}
-              className="flex min-h-11 w-full items-center gap-3 rounded-sm px-3 text-left t-body hover:bg-wash focus-visible:bg-wash disabled:text-muted disabled:hover:bg-transparent"
+              className={cx(
+                "flex min-h-11 w-full items-center gap-3 rounded-sm px-3 text-left t-body hover:bg-wash focus-visible:bg-wash disabled:text-muted disabled:hover:bg-transparent",
+                it.danger && "text-crimson-strong",
+                it.danger && index > 0 && "mt-1 border-t border-line pt-1",
+              )}
             >
               {it.icon}
               {it.label}

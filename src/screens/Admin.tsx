@@ -13,7 +13,7 @@ import { ConfirmActionModal } from "../components/ConfirmActionModal";
 import { FilterTabs } from "../components/FilterTabs";
 import { HostMenu } from "../components/HostMenu";
 import { REPORT_REASONS } from "../constants";
-import { Container, TopBar } from "../shell";
+import { BackLink, Container, TopBar } from "../shell";
 import { useApp } from "../store";
 import { Button, ErrorState, Spinner } from "../ui";
 
@@ -110,14 +110,12 @@ export function Admin() {
   return (
     <div className="min-h-dvh bg-nest">
       <TopBar>
-        <a className="flex min-h-11 items-center rounded-sm px-3 hover:bg-wash" href="/dashboard">
-          Your books
-        </a>
         <HostMenu />
       </TopBar>
       <Container className="py-8 md:py-12">
         <main className="mx-auto flex max-w-3xl flex-col gap-6">
-          <div className="flex flex-col gap-2">
+          <BackLink href="/dashboard">Your books</BackLink>
+          <div className="-mt-2 flex flex-col gap-2">
             <h1 className="t-h1">Admin reports</h1>
             <p className="t-body text-muted">
               Books reported by readers and guests. Hosts can't see this queue.

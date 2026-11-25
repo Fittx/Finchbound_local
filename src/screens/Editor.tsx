@@ -285,22 +285,22 @@ export function Editor() {
           <BookFeedback bookId={book.id} compact />
           <Button
             variant="secondary"
-            className="max-md:w-11 max-md:px-0"
+            className="max-lg:w-11 max-lg:px-0"
             icon={<Eye className="size-5" aria-hidden="true" />}
             aria-label="Preview"
             onClick={() => navigate(`/reader/${book.slug}?preview=${book.id}`)}
           >
-            <span className="hidden md:inline">Preview</span>
+            <span className="hidden lg:inline">Preview</span>
           </Button>
           <ExportBookButton book={book} pages={pages} />
           <Button
             variant="secondary"
-            className="max-md:w-11 max-md:px-0"
+            className="max-lg:w-11 max-lg:px-0"
             icon={<Plus className="size-5" aria-hidden="true" />}
             onClick={() => setEditing("new")}
             aria-label="Add page"
           >
-            <span className="hidden md:inline">Add page</span>
+            <span className="hidden lg:inline">Add page</span>
           </Button>
           <Button
             onClick={() => setPublish("confirm")}

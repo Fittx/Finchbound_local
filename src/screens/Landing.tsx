@@ -1,3 +1,4 @@
+import { useSession } from "../api/session";
 import { SiteFooter } from "../components/SiteFooter";
 import { useEffect, useState } from "react";
 import { ArrowRight, Pause, Play } from "lucide-react";
@@ -28,6 +29,7 @@ const FEATURES = [
 
 export function Landing() {
   const { navigate } = useApp();
+  const session = useSession();
   return (
     <div className="min-h-dvh bg-nest">
       <header>
@@ -40,12 +42,20 @@ export function Landing() {
             <Logo />
           </a>
           <nav className="flex items-center gap-0 md:gap-3">
-            <Button variant="link" className="px-2 md:px-3" onClick={() => navigate("/signin")}>
-              Sign in
-            </Button>
-            <Button className="max-md:px-3" onClick={() => navigate("/signup")}>
-              Get started
-            </Button>
+            {session ? (
+              <Button className="max-md:px-3" onClick={() => navigate("/dashboard")}>
+                Your books
+              </Button>
+            ) : (
+              <>
+                <Button variant="link" className="px-2 md:px-3" onClick={() => navigate("/signin")}>
+                  Sign in
+                </Button>
+                <Button className="max-md:px-3" onClick={() => navigate("/signup")}>
+                  Get started
+                </Button>
+              </>
+            )}
           </nav>
         </Container>
       </header>
@@ -61,8 +71,8 @@ export function Landing() {
               worth keeping.
             </p>
             <div className="flex flex-col gap-3 pt-2 md:flex-row">
-              <Button size="lg" onClick={() => navigate("/signup")}>
-                Get started
+              <Button size="lg" onClick={() => navigate(session ? "/dashboard" : "/signup")}>
+                {session ? "Go to your books" : "Get started"}
               </Button>
               <Button
                 size="lg"
@@ -70,7 +80,7 @@ export function Landing() {
                 iconRight={<ArrowRight className="size-5" aria-hidden="true" />}
                 onClick={() => navigate("/create")}
               >
-                Nest your first book
+                {session ? "Create a book" : "Nest your first book"}
               </Button>
             </div>
           </div>

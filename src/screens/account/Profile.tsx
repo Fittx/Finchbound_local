@@ -5,7 +5,8 @@ import { useSession } from "../../api/session";
 import { FormAlert } from "../../components/FormAlert";
 import { LogoutModal } from "../../components/LogoutModal";
 import { SiteFooter } from "../../components/SiteFooter";
-import { Container, TopBar } from "../../shell";
+import { BackLink, Container, TopBar } from "../../shell";
+import { HostMenu } from "../../components/HostMenu";
 import { useApp } from "../../store";
 import { Button, Input, Skeleton } from "../../ui";
 import { LIMITS } from "../../constants";
@@ -87,13 +88,12 @@ export function Profile() {
   return (
     <div className="min-h-dvh bg-nest">
       <TopBar>
-        <a className="flex min-h-11 items-center rounded-sm px-3 hover:bg-wash" href="/dashboard">
-          Your books
-        </a>
+        <HostMenu />
       </TopBar>
       <Container className="py-8 md:py-12">
         <main className="mx-auto flex max-w-2xl flex-col gap-8">
-          <div className="flex flex-col gap-2">
+          <BackLink href="/dashboard">Your books</BackLink>
+          <div className="-mt-4 flex flex-col gap-2">
             <h1 className="t-h1">Account</h1>
             <p className="t-body text-muted">A little about the person behind the books.</p>
           </div>
@@ -171,23 +171,30 @@ export function Profile() {
           {loadStatus === "ready" && (
             <>
               <section className="flex flex-col gap-4 rounded-lg bg-linen p-6 shadow-e1">
-                <h2 className="t-h2">Security</h2>
-                <Button
-                  variant="secondary"
-                  className="self-start"
-                  onClick={() => setModal("password")}
-                >
-                  Change password
-                </Button>
+                <div className="flex flex-col gap-1">
+                  <h2 className="t-h2">Sign-in and security</h2>
+                  <p className="t-caption text-muted">
+                    Changing your password signs you out on every device.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="secondary" onClick={() => setModal("password")}>
+                    Change password
+                  </Button>
+                  <Button variant="ghost" onClick={() => setModal("logout")}>
+                    Sign out
+                  </Button>
+                </div>
               </section>
-              <section className="flex flex-col items-start gap-4 rounded-lg bg-linen p-6 shadow-e1">
-                <h2 className="t-h2">Account actions</h2>
-                <Button variant="secondary" onClick={() => setModal("logout")}>
-                  Sign out
-                </Button>
-                <p className="t-caption text-muted">
-                  Deleting your account permanently removes your books and entries.
-                </p>
+              {/* Destructive action on its own, away from everyday actions. */}
+              <section className="flex flex-col items-start gap-4 rounded-lg border border-crimson-wash bg-linen p-6 shadow-e1">
+                <div className="flex flex-col gap-1">
+                  <h2 className="t-h2">Delete account</h2>
+                  <p className="t-caption text-muted">
+                    Permanently removes your account, all your books and their guest entries. This
+                    can't be undone.
+                  </p>
+                </div>
                 <Button variant="destructive" onClick={() => setModal("delete")}>
                   Delete account
                 </Button>

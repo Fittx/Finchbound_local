@@ -258,11 +258,11 @@ function Form({
           autoComplete="name"
           value={draft.name}
           maxLength={LIMITS.personName}
-          placeholder="Name"
+          placeholder="Your full name"
           onChange={(e) => update({ name: e.target.value })}
           error={show("name")}
           disabled={status === "sending"}
-          helper="Used by the event manager. Your sign-off below is shown in the book."
+          helper="Only the hosts see this. Your sign-off below is what appears in the book."
         />
         {needsEmail(event) && (
           <Input
@@ -281,7 +281,8 @@ function Form({
           value={draft.signoff ?? ""}
           maxLength={LIMITS.personName}
           onChange={(e) => update({ signoff: e.target.value })}
-          placeholder="Name"
+          placeholder="e.g. Aunt May"
+          disabled={status === "sending"}
           helper="Leave blank to stay anonymous in the book."
         />
         <PhotoUpload

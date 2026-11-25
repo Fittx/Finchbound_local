@@ -26,6 +26,9 @@ export function GuestWelcome() {
           </div>
           <div className="flex flex-col items-center gap-6 text-center lg:col-span-6 lg:items-start lg:text-left">
             <div className="flex max-w-md flex-col gap-3">
+              <p className="t-caption font-medium tracking-wide text-muted uppercase">
+                {event.title}
+              </p>
               <h1 className="t-h1">Leave a page for {event.hosts}</h1>
               <p className="t-body md:text-lg md:leading-7">{event.prompt}</p>
               <p className="flex items-center justify-center gap-2 t-caption lg:justify-start">

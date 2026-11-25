@@ -58,7 +58,7 @@ export function BookFeedback({
       <Button
         variant="secondary"
         size={bookId ? "md" : "icon"}
-        className={bookId && compact ? "max-md:w-11 max-md:px-0" : undefined}
+        className={bookId && compact ? "max-lg:w-11 max-lg:px-0" : undefined}
         icon={bookId ? <MessageSquare className="size-5" aria-hidden="true" /> : undefined}
         aria-label={bookId ? "Reader feedback" : "Message the book owner"}
         onClick={() => {
@@ -68,7 +68,7 @@ export function BookFeedback({
         }}
       >
         {bookId ? (
-          <span className={compact ? "hidden md:inline" : undefined}>Reader feedback</span>
+          <span className={compact ? "hidden lg:inline" : undefined}>Reader feedback</span>
         ) : (
           <MessageSquare className="size-5" aria-hidden="true" />
         )}

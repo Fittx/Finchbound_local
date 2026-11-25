@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { AlertCircle, Check, Info, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, Check, Info, X } from "lucide-react";
 import { Logo } from "./brand";
 import { useApp } from "./store";
 import { cx } from "./ui";
@@ -26,6 +26,19 @@ export function TopBar({ children, home = "/dashboard" }: { children?: ReactNode
         <div className="flex items-center gap-2 md:gap-4">{children}</div>
       </Container>
     </header>
+  );
+}
+
+/** The one "go up a level" link used at the top of every inner screen. */
+export function BackLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a
+      href={href}
+      className="-ml-3 inline-flex min-h-11 items-center gap-2 self-start rounded-md px-3 t-body font-medium hover:bg-wash"
+    >
+      <ArrowLeft className="size-5" aria-hidden="true" />
+      {children}
+    </a>
   );
 }
 

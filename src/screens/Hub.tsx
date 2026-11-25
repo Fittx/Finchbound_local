@@ -5,11 +5,18 @@ import { useOwnedBook } from "../hooks/useOwnedBook";
 import { guestJoinUrl } from "../lib/routing";
 import { useEffect, useRef, useState } from "react";
 import { QRCodeCanvas, QRCodeSVG } from "qrcode.react";
-import { AlertCircle, ArrowLeft, BookOpen, Download, LayoutGrid } from "lucide-react";
+import {
+  AlertCircle,
+  BookOpen,
+  Download,
+  LayoutGrid,
+  Settings as SettingsIcon,
+} from "lucide-react";
 import { FeatherMark, LogoMark } from "../brand";
 import { bookFont } from "../book";
 import { FONTS, initials, type Book } from "../data";
-import { Container, TopBar } from "../shell";
+import { BackLink, Container, TopBar } from "../shell";
+import { SettingsModal } from "./Dashboard";
 import { LIMITS } from "../constants";
 import { TextLink } from "../components/TextLink";
 import { useApp } from "../store";
@@ -29,7 +36,11 @@ export const settingsSummary = (b: Book, pending?: number) =>
     b.access === "strict" && "Approval on",
     b.access === "strict" && pending !== undefined && `${pending} pending`,
     b.photoRequired ? "Photo required" : "Photo optional",
-    b.status === "open" ? "Flock active" : "Flock paused",
+    b.status === "open"
+      ? "Taking entries"
+      : b.status === "closed"
+        ? "Entries closed"
+        : "Entries not open yet",
   ]
     .filter(Boolean)
     .join(" · ");
@@ -37,9 +48,10 @@ export const settingsSummary = (b: Book, pending?: number) =>
 export function Hub() {
   const host = useSession();
   const { route, navigate, screenState, setScreenState, reduced } = useApp();
-  const { book, error } = useOwnedBook(route.path[1] ?? "");
+  const { book, error, refresh } = useOwnedBook(route.path[1] ?? "");
   const mod = useModeration(book);
   const [invite, setInvite] = useState(false);
+  const [settings, setSettings] = useState(false);
 
   if (!book && !error)
     return (
@@ -69,58 +81,74 @@ export function Hub() {
       </TopBar>
       <main>
         <Container className="pt-6 pb-16 md:pt-8">
-          <a
-            href="/dashboard"
-            className="-ml-3 inline-flex min-h-11 items-center gap-2 rounded-md px-3 t-body font-medium hover:bg-wash"
-          >
-            <ArrowLeft className="size-5" aria-hidden="true" />
-            Your books
-          </a>
+          <BackLink href="/dashboard">Your books</BackLink>
           <div className="mt-4 mb-8 flex flex-col gap-6 md:mb-10 lg:flex-row lg:items-end lg:justify-between">
-            <div className="flex min-w-0 flex-col gap-3">
-              <h1 className="t-h1">{book.title}</h1>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <a
-                  className="flex min-h-11 items-center t-body break-all underline"
-                  href={`/reader/${book.slug}`}
-                >
-                  {window.location.host}/reader/{book.slug}
-                </a>
-                <CopyButton
-                  text={new URL(`/reader/${book.slug}`, window.location.href).href}
-                  compact
-                  label="Copy book link"
-                />
-              </div>
+            <div className="flex min-w-0 flex-col gap-2">
+              <h1 className="t-h1 break-words">{book.title}</h1>
               <p className="flex items-start gap-2 t-caption text-muted">
                 <span className="mt-1.5">
                   <Dot color={book.status === "open" ? "#2F7D57" : "#8A8C9C"} />
                 </span>
                 {settingsSummary(book, mod.status === "ready" ? mod.counts.pending : undefined)}
               </p>
+              {book.live && book.visibility === "link" ? (
+                <div className="flex flex-wrap items-center gap-x-2 t-caption">
+                  <span className="text-muted">Reader:</span>
+                  <a className="break-all underline" href={`/reader/${book.slug}`}>
+                    {window.location.host}/reader/{book.slug}
+                  </a>
+                  <CopyButton
+                    text={new URL(`/reader/${book.slug}`, window.location.href).href}
+                    compact
+                    label="Copy reader link"
+                  />
+                </div>
+              ) : (
+                <p className="t-caption text-muted">
+                  The reader isn't published yet. Publish it from Settings when the book is ready.
+                </p>
+              )}
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <Button
                 variant="secondary"
-                icon={<LayoutGrid className="size-5" aria-hidden="true" />}
+                icon={<LayoutGrid className="size-5 shrink-0" aria-hidden="true" />}
+                className="max-sm:flex-1 max-sm:px-2"
                 onClick={() => navigate(`/editor/${book.id}`)}
-                className="max-md:flex-1"
               >
-                Arrange pages
+                <span className="max-sm:sr-only">Arrange pages</span>
+                <span className="sm:hidden" aria-hidden="true">
+                  Pages
+                </span>
               </Button>
               <Button
                 variant="ghost"
-                icon={<BookOpen className="size-5" aria-hidden="true" />}
-                onClick={() => navigate(`/reader/${book.slug}`)}
-                className="max-md:flex-1"
+                icon={<BookOpen className="size-5 shrink-0" aria-hidden="true" />}
+                className="max-sm:flex-1 max-sm:px-2"
+                onClick={() => navigate(`/reader/${book.slug}?preview=${book.id}`)}
               >
-                View book
+                <span className="max-sm:sr-only">Preview book</span>
+                <span className="sm:hidden" aria-hidden="true">
+                  Preview
+                </span>
+              </Button>
+              <Button
+                variant="ghost"
+                icon={<SettingsIcon className="size-5 shrink-0" aria-hidden="true" />}
+                className="max-sm:flex-1 max-sm:px-2"
+                onClick={() => setSettings(true)}
+              >
+                Settings
               </Button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <aside className="flex flex-col gap-6 lg:col-span-4" aria-labelledby="scan-h">
+            {/* On phones the live feed comes first: it is what hosts watch during the event. */}
+            <aside
+              className="order-2 flex flex-col gap-6 lg:order-none lg:col-span-4"
+              aria-labelledby="scan-h"
+            >
               <div className="flex flex-col gap-6 rounded-lg bg-linen p-6 shadow-e1 md:flex-row md:items-center lg:flex-col lg:items-stretch">
                 <div className="flex justify-center rounded-md bg-wash p-5 md:shrink-0 lg:shrink">
                   {mod.status === "loading" ? (
@@ -164,6 +192,9 @@ export function Hub() {
         </Container>
       </main>
       {invite && <InviteModal book={book} onClose={() => setInvite(false)} />}
+      {settings && (
+        <SettingsModal book={book} onClose={() => setSettings(false)} onSaved={refresh} />
+      )}
     </div>
   );
 }
