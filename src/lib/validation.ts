@@ -23,7 +23,8 @@ export function passwordStrength(pw: string): Strength {
 export const PASSWORD_RULE = `Use at least ${LIMITS.passwordMin} characters including a letter and a number.`;
 
 export function passwordError(value: string) {
-  if (new TextEncoder().encode(value).length > 72) return "This password is too long. Try a shorter one.";
+  if (new TextEncoder().encode(value).length > 72)
+    return "This password is too long. Try a shorter one.";
   return passwordStrength(value).ok ? undefined : PASSWORD_RULE;
 }
 

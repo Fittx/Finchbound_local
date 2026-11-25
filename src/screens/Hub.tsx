@@ -1,4 +1,5 @@
 import { BookFeedback } from "../components/BookFeedback";
+import { HostMenu } from "../components/HostMenu";
 import { useSession } from "../api/session";
 import { useOwnedBook } from "../hooks/useOwnedBook";
 import { guestJoinUrl } from "../lib/routing";
@@ -64,12 +65,7 @@ export function Hub() {
   return (
     <div className="min-h-dvh bg-nest">
       <TopBar>
-        <span
-          className="flex size-10 items-center justify-center rounded-full bg-gold t-caption font-bold"
-          aria-label={host?.name ?? "Host"}
-        >
-          AL
-        </span>
+        <HostMenu />
       </TopBar>
       <main>
         <Container className="pt-6 pb-16 md:pt-8">
@@ -84,8 +80,17 @@ export function Hub() {
             <div className="flex min-w-0 flex-col gap-3">
               <h1 className="t-h1">{book.title}</h1>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <a className="flex min-h-11 items-center t-body break-all underline" href={`/reader/${book.slug}`}>{window.location.host}/reader/{book.slug}</a>
-                <CopyButton text={new URL(`/reader/${book.slug}`, window.location.href).href} compact label="Copy book link" />
+                <a
+                  className="flex min-h-11 items-center t-body break-all underline"
+                  href={`/reader/${book.slug}`}
+                >
+                  {window.location.host}/reader/{book.slug}
+                </a>
+                <CopyButton
+                  text={new URL(`/reader/${book.slug}`, window.location.href).href}
+                  compact
+                  label="Copy book link"
+                />
               </div>
               <p className="flex items-start gap-2 t-caption text-muted">
                 <span className="mt-1.5">

@@ -21,4 +21,6 @@ export type Preset = {
 };
 
 /** Legacy state hooks carry no prefilled data. */
-export function getPreset(_screen: string, _variant: string | null): Preset { return {}; }
+export function getPreset(_screen: string, _variant: string | null): Preset {
+  return {};
+}

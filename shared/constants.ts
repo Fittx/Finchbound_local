@@ -25,7 +25,14 @@ export const LIMITS = {
   sessionMinutes: 30,
   /** How long Undo stays available before a delete is committed. */
   undoMs: 6000,
+  /** Event size, used to scale per-book guest rate limits. */
+  expectedGuestsMin: 1,
+  expectedGuestsMax: 2000,
+  expectedGuestsDefault: 100,
 } as const;
+
+/** Accepted only by a development server with no Turnstile secret. Never valid in production. */
+export const DEV_CAPTCHA_TOKEN = "local-development-only";
 
 export const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",

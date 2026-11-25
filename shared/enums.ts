@@ -8,3 +8,6 @@ export const PRESET_KEYS = ["golden", "crimson", "skyline", "pine", "custom"] as
 export const SUBMISSION_STATUSES = ["pending", "approved", "in-book", "rejected"] as const;
 export const REPORT_REASON_VALUES = ["inappropriate", "spam", "privacy", "other"] as const;
 export const ACCOUNT_PLANS = ["free", "unlimited"] as const;
+/** Roles come from server configuration (ADMIN_EMAILS), never from client input. */
+export const USER_ROLES = ["host", "admin"] as const;
+export const PLATFORM_REPORT_STATUSES = ["open", "dismissed", "actioned"] as const;

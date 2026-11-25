@@ -88,7 +88,7 @@ Phase 2 notes:
   Resend and forgot-password use the same 30-second per-email cooldown for nonexistent
   and existing users. Successful forgot-password JSON never reveals existence.
 - Startup creates required unique/TTL indexes explicitly, including in production.
-- See phase-2.md for test commands, remaining verification and mail-delivery limitations.
+- See the root README for test commands; `npm run check:env` verifies the SMTP connection.
 
 ## Books (`src/api/books.ts`, types in `src/types/books.ts`)
 
@@ -138,13 +138,13 @@ remain private. Public responses exclude guest emails, reports and host reaction
 
 One Page is one spread in the reader.
 
-| Method | Route                                                         | Body                              | Success                                                   | Errors                         |
-| ------ | ------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------- | ------------------------------ |
-| GET    | `/api/books/:bookId/pages?q=&withPhoto=&sort=&cursor=&limit=` | none                              | 200 `Paginated<Page>` (position or recently edited order) | 403, 404                       |
-| POST   | `/api/books/:bookId/pages`                                    | `CreatePageRequest`               | 201 `{ page }` (appended)                                 | 400 (fields: title, body), 403 |
-| PATCH  | `/api/pages/:pageId`                                          | `Partial<CreatePageRequest>`      | 200 `{ page }`                                            | 400, 403, 404                  |
-| DELETE | `/api/pages/:pageId`                                          | none                              | 204                                                       | 403, 404                       |
-| PUT    | `/api/books/:bookId/pages/order`                              | `ReorderPagesRequest { pageId, beforeId? , afterId?, expectedVersion }` | 200 `{ pageId, order, version }` | 400, 403, 404, 409 CONFLICT |
+| Method | Route                                                         | Body                                                                    | Success                                                   | Errors                         |
+| ------ | ------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------ |
+| GET    | `/api/books/:bookId/pages?q=&withPhoto=&sort=&cursor=&limit=` | none                                                                    | 200 `Paginated<Page>` (position or recently edited order) | 403, 404                       |
+| POST   | `/api/books/:bookId/pages`                                    | `CreatePageRequest`                                                     | 201 `{ page }` (appended)                                 | 400 (fields: title, body), 403 |
+| PATCH  | `/api/pages/:pageId`                                          | `Partial<CreatePageRequest>`                                            | 200 `{ page }`                                            | 400, 403, 404                  |
+| DELETE | `/api/pages/:pageId`                                          | none                                                                    | 204                                                       | 403, 404                       |
+| PUT    | `/api/books/:bookId/pages/order`                              | `ReorderPagesRequest { pageId, beforeId? , afterId?, expectedVersion }` | 200 `{ pageId, order, version }`                          | 400, 403, 404, 409 CONFLICT    |
 
 ## Submissions: host moderation (`src/api/submissions.ts`, types in `src/types/submissions.ts`)
 
@@ -197,13 +197,13 @@ A fresh connection starts at the current book sequence. On `ready`, fetch the no
 feed and merge arrivals by ID. On reconnect, EventSource sends the last delivered ID.
 The signed ID belongs to one host and book. Invalid or foreign IDs return HTTP 400.
 
-| SSE event | Payload | Client behavior |
-| --- | --- | --- |
-| `ready` | `{bookId}` | Load the current feed |
-| `submission` | Host Submission | Insert or update by ID |
+| SSE event                                | Payload         | Client behavior                                     |
+| ---------------------------------------- | --------------- | --------------------------------------------------- |
+| `ready`                                  | `{bookId}`      | Load the current feed                               |
+| `submission`                             | Host Submission | Insert or update by ID                              |
 | `submission:updated`, `reaction:updated` | Host Submission | Update by ID and refresh affected filters or counts |
-| `submission:deleted` | `{bookId,id}` | Remove by ID |
-| `reset` | `{bookId}` | Reload the feed, counts and reports |
+| `submission:deleted`                     | `{bookId,id}`   | Remove by ID                                        |
+| `reset`                                  | `{bookId}`      | Reload the feed, counts and reports                 |
 
 MongoDB records each event in the same transaction as the change. All server instances
 read the same per-book sequence. The log keeps IDs for about 24 hours and resolves
@@ -218,22 +218,21 @@ Disable response buffering for this route when configuring a reverse proxy.
 
 ## Guest and public (`src/api/guest.ts`, types in `src/types/guest.ts`)
 
-| Method | Route                                          | Body                  | Success                                | Errors                                                                                                 |
-| ------ | ---------------------------------------------- | --------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| GET    | `/api/public/books/:slug/guest`                | none                  | 200 `GuestEvent`                       | 404 NOT_FOUND                                                                                          |
-| POST   | `/api/public/captcha`                          | `{ token, bookSlug, draftId }` | 200 `{ token, uploadToken, expiresAt }`                        | 400 CAPTCHA_FAILED, 429                                                                                |
-| POST   | `/api/public/books/:slug/verify-email`         | `{ email }`           | 200 `{ ok }`                           | 400, 403 GUEST_BLOCKED, 429                                                                            |
-| POST   | `/api/public/books/:slug/verify-email/confirm` | `{ email, code }`     | 200 `{ ok }` + guest token             | 400 INVALID_CODE, 410 CODE_EXPIRED                                                                     |
-| POST   | `/api/public/books/:slug/submissions`          | `GuestEntryRequest`   | 201 `{ status: "added" \| "pending" }` | 400 (fields), 400 CAPTCHA_FAILED, 403 GUEST_BLOCKED, 409 CONFLICT, 422 UPLOAD_FAILED, 429 RATE_LIMITED |
-| POST   | `/api/public/books/:slug/reports`              | `{ reason, details, submissionId? }` | 201 `{ ok }`                           | 400, 404, 429                                                                                          |
+| Method | Route                                          | Body                                 | Success                                 | Errors                                                                                                 |
+| ------ | ---------------------------------------------- | ------------------------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| GET    | `/api/public/books/:slug/guest`                | none                                 | 200 `GuestEvent`                        | 404 NOT_FOUND                                                                                          |
+| POST   | `/api/public/captcha`                          | `{ token, bookSlug, draftId }`       | 200 `{ token, uploadToken, expiresAt }` | 400 CAPTCHA_FAILED, 429                                                                                |
+| POST   | `/api/public/books/:slug/verify-email`         | `{ email }`                          | 200 `{ ok }`                            | 400, 403 GUEST_BLOCKED, 429                                                                            |
+| POST   | `/api/public/books/:slug/verify-email/confirm` | `{ email, code }`                    | 200 `{ ok }` + guest token              | 400 INVALID_CODE, 410 CODE_EXPIRED                                                                     |
+| POST   | `/api/public/books/:slug/submissions`          | `GuestEntryRequest`                  | 201 `{ status: "added" \| "pending" }`  | 400 (fields), 400 CAPTCHA_FAILED, 403 GUEST_BLOCKED, 409 CONFLICT, 422 UPLOAD_FAILED, 429 RATE_LIMITED |
+| POST   | `/api/public/books/:slug/reports`              | `{ reason, details, submissionId? }` | 201 `{ ok }`                            | 400, 404, 429                                                                                          |
 
 ### Phase 5 guest credentials and behavior
 
 - Email request and confirmation use `Authorization: Bearer <captcha proof>` from the Phase 4
   CAPTCHA response; their JSON bodies stay unchanged. A successful confirmation sets a separate
   book-specific httpOnly guest cookie. Submissions send the CAPTCHA proof in `captcha` and must
-  include that cookie for Email-only/Strict events. See phase-5.md for exact scope and lifetimes.
-- The host account Gmail-only restriction does not apply to guest emails. All Email/Strict emails
+  include that cookie for Email-only/Strict events.- The host account Gmail-only restriction does not apply to guest emails. All Email/Strict emails
   are normalized and verified against their own book/draft/grant. OTP resend cooldown spans drafts.
 - Submission proof, verification, photo attachment and entry count are committed once together.
   Duplicate/used CAPTCHA returns CAPTCHA_FAILED; a newly issued proof cannot reuse a saved draft.
@@ -267,7 +266,17 @@ POST /api/public/captcha requires a Turnstile action matching TURNSTILE_ACTION a
 bookSlug_draftId. It checks an open event and issues two separate signed tokens plus ISO expiry.
 Upload tokens last at most 600 seconds and have atomic use/draft/IP/book limits. Missing R2 or
 Turnstile configuration fails closed (503 SERVER); provider challenge failures return CAPTCHA_FAILED.
-See phase-4.md for setup, quota values, CPU/memory bounds and live-service limitations.
+Local development stores photos on disk (`STORAGE_PROVIDER=local`) and accepts a dev-only
+human-check token when `TURNSTILE_SECRET` is empty; production requires R2 and Turnstile.
+Guest per-book limits scale with the book's `expectedGuests` (1 to 2,000, default 100).
+
+## Admin and platform reports
+
+- `POST /api/public/books/:slug/platform-reports` `{ reason, details, submissionId? }`: public; only
+  for live link books and event books. Limited to 5 per device and 20 per IP per hour.
+- `/api/admin/*` requires a session whose email is listed in `ADMIN_EMAILS` (403 otherwise):
+  `GET /reports?status=open|actioned|dismissed&cursor=`, `POST /reports/:id/dismiss`,
+  `POST /books/:bookId/unpublish`, `DELETE /submissions/:submissionId`.
 
 ## Not yet wired to `src/api/`
 

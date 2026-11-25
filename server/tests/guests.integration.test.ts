@@ -521,20 +521,45 @@ describe.skipIf(!uri)("guest flows with real MongoDB, scoped credentials and tra
     const fresh = await challenge(nameBook.slug);
     await submit(nameBook.slug, fresh, { email: "victim@example.org" }).expect(201);
   });
-  it("uses shared durable IP and per-book quotas", async () => {
+  it("uses durable per-device quotas and per-book quotas sized by the expected guest count", async () => {
     const guests = new GuestService(
       testConfig({ RATE_LIMIT_MAX_REQUESTS: "2", RATE_LIMIT_WINDOW_MS: "3600000" }),
       mailer,
     );
-    await guests.quota("submit", "ip-one", "a");
-    await guests.quota("submit", "ip-two", "a");
-    await expect(guests.quota("submit", "ip-three", "a")).rejects.toMatchObject({
+    const small = await book("name", randomUUID(), { expectedGuests: 1 });
+    const large = await book("name", randomUUID(), { expectedGuests: 50 });
+    // One device gets the base limit on any book.
+    await guests.quota("submit", "ip-one", large.slug, "device-a");
+    await guests.quota("submit", "ip-one", large.slug, "device-a");
+    await expect(guests.quota("submit", "ip-one", large.slug, "device-a")).rejects.toMatchObject({
       code: "RATE_LIMITED",
     });
-    await guests.quota("submit", "ip-one", "b");
-    await expect(guests.quota("submit", "ip-one", "c")).rejects.toMatchObject({
+    // A one-guest book keeps the base ceiling across devices and IPs.
+    await guests.quota("submit", "ip-two", small.slug, "device-b");
+    await guests.quota("submit", "ip-three", small.slug, "device-c");
+    await expect(guests.quota("submit", "ip-four", small.slug, "device-d")).rejects.toMatchObject({
       code: "RATE_LIMITED",
     });
+    // A 50-guest book lets a whole venue on one IP through.
+    for (let i = 0; i < 40; i++)
+      await guests.quota("submit", "venue-ip", large.slug, "venue-device-" + i);
+  });
+  it("lets a crowd on one IP open a large event's guest page", async () => {
+    const limited = createApp({
+      config: testConfig({ RATE_LIMIT_MAX_REQUESTS: "3", AUTH_RATE_LIMIT_MAX_REQUESTS: "300" }),
+      isDatabaseReady: () => true,
+      mailer,
+      storage,
+      captcha: { async verify() {} },
+      logger: testLogger(),
+    });
+    const b = await book("name", randomUUID(), { expectedGuests: 20 });
+    // Ten fresh devices from the same address, more than the base limit of 3.
+    for (let i = 0; i < 10; i++)
+      await request(limited).get(`/api/public/books/${b.slug}/guest`).expect(200);
+    expect(
+      (await request(app).get(`/api/books/${b.id}`).set("Cookie", owner)).body.book,
+    ).toMatchObject({ expectedGuests: 20 });
   });
   it("does not create a challenge if SMTP is unconfigured and rolls back failed commits", async () => {
     const b = await book("email"),

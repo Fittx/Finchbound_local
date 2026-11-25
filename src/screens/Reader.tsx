@@ -1,9 +1,18 @@
 import { bookPageLabel } from "../lib/pagination";
-import { FlowSpread, LeafContent, useFlowBook, useLeafSize, SPREAD_LEAF, type BookLeaf } from "../components/FlowBook";
+import {
+  FlowSpread,
+  LeafContent,
+  useFlowBook,
+  useLeafSize,
+  SPREAD_LEAF,
+  type BookLeaf,
+} from "../components/FlowBook";
 import { BookFeedback } from "../components/BookFeedback";
 import { listPages } from "../api/pages";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Home, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flag, Home, X } from "lucide-react";
+import { ReportContentModal } from "../components/ReportContentModal";
+import { useSession } from "../api/session";
 import { NotebookPage, Scaled, bookFont, useFlip } from "../book";
 import { FeatherMark } from "../brand";
 import { PRESETS, type Book, type Page } from "../data";
@@ -63,10 +72,24 @@ export function Reader() {
       active = false;
     };
   }, [route.path[1], route.query.get("preview"), attempt]);
-  const book: Book = found ?? { id: "", title: "", slug: "", kind: "personal", live: false,
-    visibility: "private", theme: PRESETS.crimson.colors, font: "sans", lines: true,
-    preset: "crimson", access: "name", photoRequired: false, messageRequired: false,
-    pages: [], entries: 0, updated: "" };
+  const book: Book = found ?? {
+    id: "",
+    title: "",
+    slug: "",
+    kind: "personal",
+    live: false,
+    visibility: "private",
+    theme: PRESETS.crimson.colors,
+    font: "sans",
+    lines: true,
+    preset: "crimson",
+    access: "name",
+    photoRequired: false,
+    messageRequired: false,
+    pages: [],
+    entries: 0,
+    updated: "",
+  };
   const mobile = useMedia("(max-width: 833px)");
   const landscape = useMedia("(max-height: 559px) and (orientation: landscape)");
   // Only published, link-visible books; only spreads that are In book.
@@ -80,7 +103,10 @@ export function Reader() {
           : found.pages.length
             ? "default"
             : "empty";
-  const originalPages = useMemo(() => state === "default" && found ? found.pages : [], [state, found]);
+  const originalPages = useMemo(
+    () => (state === "default" && found ? found.pages : []),
+    [state, found],
+  );
   const leafViewport = useRef<HTMLDivElement>(null);
   const mobileSize = useLeafSize(leafViewport);
   const singlePage = mobile && !landscape;
@@ -89,6 +115,8 @@ export function Reader() {
   const { index: rawIndex, setIndex, turn, go } = useFlip(total, reduced);
   const index = Math.min(rawIndex, Math.max(0, total - 1));
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [reporting, setReporting] = useState(false);
+  const session = useSession();
   const [dir, setDir] = useState<"next" | "prev">("next");
   const touch = useRef<{ x: number; y: number } | null>(null);
 
@@ -103,10 +131,25 @@ export function Reader() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || lightbox !== null ||
-        (e.target as HTMLElement)?.closest("input, textarea, select, [contenteditable=true], [role=combobox], [role=dialog]")) return;
-      if (e.key === "ArrowRight") { e.preventDefault(); nav("next"); }
-      if (e.key === "ArrowLeft") { e.preventDefault(); nav("prev"); }
+      if (
+        e.defaultPrevented ||
+        e.altKey ||
+        e.ctrlKey ||
+        e.metaKey ||
+        lightbox !== null ||
+        (e.target as HTMLElement)?.closest(
+          "input, textarea, select, [contenteditable=true], [role=combobox], [role=dialog]",
+        )
+      )
+        return;
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        nav("next");
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        nav("prev");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -119,6 +162,11 @@ export function Reader() {
       : "#EFE9DE",
   };
   const current = leaves[index];
+  // Guest pages on screen, so a reader can report a specific entry to Finchbound.
+  const visibleEntries = (singlePage ? [current] : [leaves[index * 2], leaves[index * 2 + 1]])
+    .map((leaf) => leaf?.source)
+    .filter((page, i, all): page is Page => !!page?.submissionId && all.indexOf(page) === i)
+    .map((page) => ({ submissionId: page.submissionId!, title: page.title }));
 
   return (
     <div
@@ -128,13 +176,13 @@ export function Reader() {
       )}
       style={canvasVars}
     >
-      <header className="reader-header relative flex h-20 shrink-0 items-center justify-center pr-32 pl-20 md:px-44">
+      <header className="reader-header relative flex h-20 shrink-0 items-center justify-center pr-44 pl-20 md:px-48">
         <Button
           variant="inverse"
           size="icon"
           className="absolute! top-4 left-4 rounded-full shadow-e2"
-          aria-label="Back to Finchbound"
-          onClick={() => navigate("/dashboard")}
+          aria-label={session ? "Back to your books" : "Finchbound home"}
+          onClick={() => navigate(session ? "/dashboard" : "/")}
         >
           <Home className="size-5" aria-hidden="true" />
         </Button>
@@ -146,20 +194,46 @@ export function Reader() {
         {(state === "default" || state === "empty") && found && (
           <div className="absolute right-4 flex items-center gap-2">
             {!route.query.get("preview") && <BookFeedback slug={book.slug} />}
+            {!route.query.get("preview") && (
+              <Button
+                variant="secondary"
+                size="icon"
+                aria-label="Report this book to Finchbound"
+                onClick={() => setReporting(true)}
+              >
+                <Flag className="size-5" aria-hidden="true" />
+              </Button>
+            )}
             <ExportBookButton book={book} pages={originalPages} />
           </div>
         )}
       </header>
+      {found && (
+        <ReportContentModal
+          open={reporting}
+          onClose={() => setReporting(false)}
+          slug={book.slug}
+          target="platform"
+          entries={visibleEntries}
+        />
+      )}
 
       <main
         className="reader-main relative min-h-0 flex-1 px-4 pb-28 md:px-8"
-        onTouchStart={(e) => { touch.current = { x: e.touches[0]!.clientX, y: e.touches[0]!.clientY }; }}
+        onTouchStart={(e) => {
+          touch.current = { x: e.touches[0]!.clientX, y: e.touches[0]!.clientY };
+        }}
         onTouchEnd={(e) => {
           if (touch.current === null) return;
           const dx = e.changedTouches[0]!.clientX - touch.current.x;
           const dy = e.changedTouches[0]!.clientY - touch.current.y;
           touch.current = null;
-          if (!(e.target as HTMLElement).closest("button, [role=dialog]") && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) nav(dx < 0 ? "next" : "prev");
+          if (
+            !(e.target as HTMLElement).closest("button, [role=dialog]") &&
+            Math.abs(dx) > 50 &&
+            Math.abs(dx) > Math.abs(dy)
+          )
+            nav(dx < 0 ? "next" : "prev");
         }}
       >
         {state === "loading" && (
@@ -207,7 +281,16 @@ export function Reader() {
             </div>
           ) : (
             <Scaled w={920} h={600} max={1.2} fitHeight>
-              <FlowSpread onPrev={() => nav("prev")} onNext={() => nav("next")} look={book} leaves={leaves} index={index} turn={turn} reduced={reduced} onOpen={i => setLightbox(i)} />
+              <FlowSpread
+                onPrev={() => nav("prev")}
+                onNext={() => nav("next")}
+                look={book}
+                leaves={leaves}
+                index={index}
+                turn={turn}
+                reduced={reduced}
+                onOpen={(i) => setLightbox(i)}
+              />
             </Scaled>
           ))}
       </main>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CROP_RATIOS } from "../constants";
 import { Button, Modal, Spinner } from "../ui";
 import { FormAlert } from "./FormAlert";
+import { ApiError } from "../api/client";
 export type CroppedPhotos = { polaroid: File; card: File };
 export function cropRect(
   width: number,
@@ -101,10 +102,15 @@ export function CropModal({
       const polaroid = await output(CROP_RATIOS.polaroid, 800, "polaroid.jpg");
       const card = await output(CROP_RATIOS.card, 1200, "page-card.jpg");
       await onApply({ polaroid, card });
-    } catch {
-      setError(
-        "We couldn't prepare or upload your photo. Your crop is still here. Try Apply again.",
-      );
+    } catch (e) {
+      // Server errors (too large, busy, storage unavailable) explain what to do next.
+      const reason =
+        e instanceof ApiError && e.code === "OFFLINE"
+          ? "You're offline."
+          : e instanceof ApiError && e.message && e.message !== e.code
+            ? e.message
+            : "We couldn't prepare or upload your photo.";
+      setError(`${reason} Your crop is still here. Try Apply again.`);
     } finally {
       setBusy(false);
     }

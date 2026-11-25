@@ -79,9 +79,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     window.addEventListener("popstate", onHash);
     const onLink = (event: MouseEvent) => {
       const anchor = (event.target as Element).closest?.("a[href]") as HTMLAnchorElement | null;
-      if (!anchor || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || anchor.target || anchor.hasAttribute("download")) return;
+      if (
+        !anchor ||
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.altKey ||
+        anchor.target ||
+        anchor.hasAttribute("download")
+      )
+        return;
       const url = new URL(anchor.href);
-      if (url.origin !== window.location.origin || !anchor.getAttribute("href")?.startsWith("/")) return;
+      if (url.origin !== window.location.origin || !anchor.getAttribute("href")?.startsWith("/"))
+        return;
       event.preventDefault();
       window.history.pushState(null, "", url.pathname + url.search);
       onHash();
@@ -173,15 +185,4 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ],
   );
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
-}
-
-/** Simulated network: resolves after a delay unless a development state is forced. */
-export function useSimulatedLoad(ms = 700, key: unknown = null) {
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    setReady(false);
-    const t = window.setTimeout(() => setReady(true), ms);
-    return () => window.clearTimeout(t);
-  }, [ms, key]);
-  return ready;
 }

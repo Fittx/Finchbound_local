@@ -3,6 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { initials } from "../data";
 import { useOutside } from "../ui";
 import { useApp } from "../store";
+import { useSession } from "../api/session";
 export function ProfileMenu({
   name,
   onSignOut,
@@ -13,6 +14,7 @@ export function ProfileMenu({
   initiallyOpen?: boolean;
 }) {
   const { navigate } = useApp();
+  const session = useSession();
   const [open, setOpen] = useState(initiallyOpen);
   const ref = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -49,7 +51,6 @@ export function ProfileMenu({
         </span>
         <span className="hidden text-left md:block">
           <span className="block t-caption font-medium">{name}</span>
-
         </span>
         <ChevronDown className="size-4" aria-hidden="true" />
       </button>
@@ -90,6 +91,18 @@ export function ProfileMenu({
           >
             Account
           </button>
+          {session?.role === "admin" && (
+            <button
+              role="menuitem"
+              className="flex min-h-11 w-full items-center rounded-sm px-3 text-left hover:bg-wash"
+              onClick={() => {
+                close();
+                navigate("/admin");
+              }}
+            >
+              Admin reports
+            </button>
+          )}
           <button
             role="menuitem"
             className="flex min-h-11 w-full items-center rounded-sm px-3 text-left hover:bg-wash"

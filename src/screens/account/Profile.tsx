@@ -179,7 +179,6 @@ export function Profile() {
                 >
                   Change password
                 </Button>
-
               </section>
               <section className="flex flex-col items-start gap-4 rounded-lg bg-linen p-6 shadow-e1">
                 <h2 className="t-h2">Account actions</h2>

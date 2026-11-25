@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { verifyCaptcha } from "../api/guest";
 import type { CaptchaResponse } from "../types/guest";
 import { Button } from "../ui";
+import { DEV_CAPTCHA_TOKEN } from "../constants";
 
 type Turnstile = {
   render(element: HTMLElement, options: Record<string, unknown>): string;
@@ -86,6 +87,21 @@ export function Captcha({
         <p role="status">Human verification complete</p>
       ) : key ? (
         <div ref={mount} />
+      ) : import.meta.env.DEV ? (
+        // Local development without a Turnstile site key; stripped from production builds.
+        <Button
+          variant="secondary"
+          className="self-start"
+          onClick={async () => {
+            try {
+              onGrant(await verifyCaptcha(slug, draftId, DEV_CAPTCHA_TOKEN));
+            } catch {
+              setFailed(true);
+            }
+          }}
+        >
+          Skip check (dev only)
+        </Button>
       ) : (
         <p role="alert">Human verification is unavailable. Please try again later.</p>
       )}

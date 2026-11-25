@@ -1,4 +1,4 @@
-import { useRef, useState, type MouseEvent } from "react";
+import { useRef, useState } from "react";
 import { signUp } from "../../api/auth";
 import { AuthLayout } from "../../components/AuthLayout";
 import { Checkbox } from "../../components/Checkbox";
@@ -13,20 +13,15 @@ import { Button, Input } from "../../ui";
 import { errorCode } from "./usePreset";
 
 // In-memory only: keep the sign-up form when opening a legal page and returning.
-let legalDraft: {
-  name: string;
-  email: string;
-  password: string;
-  confirm: string;
-  terms: boolean;
-} | null = null;
+// Passwords are never kept; the person types them again.
+let legalDraft: { name: string; email: string; terms: boolean } | null = null;
 export function SignUp() {
   const { navigate, route } = useApp();
   const draft = route.query.get("return") === "terms" ? legalDraft : null;
   const [name, setName] = useState(draft?.name ?? "");
   const [email, setEmail] = useState(draft?.email ?? "");
-  const [password, setPassword] = useState(draft?.password ?? "");
-  const [confirm, setConfirm] = useState(draft?.confirm ?? "");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [terms, setTerms] = useState(draft?.terms ?? false);
   const [tried, setTried] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,9 +49,10 @@ export function SignUp() {
   const show = (k: keyof typeof errors) => (tried ? errors[k] : undefined);
   const count = Object.values(errors).filter(Boolean).length;
 
-  function rememberLegalDraft(event: MouseEvent<HTMLAnchorElement>) {
-    event.stopPropagation();
-    legalDraft = { name, email, password, confirm, terms };
+  // Do not stop propagation: the app's link handler must keep this an in-app navigation,
+  // otherwise the page reloads and the draft is lost.
+  function rememberLegalDraft() {
+    legalDraft = { name, email, terms };
   }
 
   async function submit() {

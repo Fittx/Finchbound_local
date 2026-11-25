@@ -92,7 +92,11 @@ const publicGet = (slug: string) => request(app).get("/api/public/books/" + slug
 describe.skipIf(!uri)("books and pages with real MongoDB transactions and sessions", () => {
   it("persists private feedback and restricts inboxes and reader visibility", async () => {
     const book = await create("feedback-book");
-    const send = () => request(app).post("/api/public/books/feedback-book/feedback").set("Origin", config.CLIENT_URL).send({ name: "Reader", message: "A lovely book" });
+    const send = () =>
+      request(app)
+        .post("/api/public/books/feedback-book/feedback")
+        .set("Origin", config.CLIENT_URL)
+        .send({ name: "Reader", message: "A lovely book" });
     await send().expect(404);
     await call("post", `/books/${book.id}/publish`).expect(200);
     await send().expect(201);
@@ -454,7 +458,7 @@ describe.skipIf(!uri)("books and pages with real MongoDB transactions and sessio
     const b = await create();
     await add(b.id, "A memory");
     const u = await call("get", "/account").expect(200);
-    expect(Object.keys(u.body.user).sort()).toEqual(["email", "id", "name", "plan"]);
+    expect(Object.keys(u.body.user).sort()).toEqual(["email", "id", "name", "plan", "role"]);
     await call("patch", "/account")
       .send({ name: "Host", email: "owner@gmail.com", passwordHash: "forbidden" })
       .expect(400);

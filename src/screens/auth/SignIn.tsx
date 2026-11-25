@@ -8,6 +8,7 @@ import { PasswordInput } from "../../components/PasswordInput";
 import { TextLink } from "../../components/TextLink";
 import { LIMITS } from "../../constants";
 import { isAccountEmail } from "../../lib/validation";
+import { safeNext } from "../../lib/routing";
 import { useApp } from "../../store";
 import { Button, Input } from "../../ui";
 import { errorCode } from "./usePreset";
@@ -25,7 +26,7 @@ export function SignIn() {
   const [serverError, setServerError] = useState<ServerError | null>(null);
   const alert = useRef<HTMLDivElement>(null);
   const passwordReset = route.query.get("reset") === "1";
-  const next = route.query.get("next") || "/dashboard";
+  const next = safeNext(route.query.get("next"));
   const busy = status !== "idle";
 
   const emailError = tried

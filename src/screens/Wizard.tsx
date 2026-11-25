@@ -1,5 +1,5 @@
 import { createBook, checkSlug } from "../api/books";
-import { ApiError } from "../api/client";
+import { ApiError, request } from "../api/client";
 import { useEffect, useState, type ReactNode } from "react";
 import { AlertCircle, ArrowLeft, BookOpen, Check, ChevronUp, QrCode } from "lucide-react";
 import {
@@ -21,6 +21,7 @@ import { ACCESS_OPTIONS } from "./Dashboard";
 import { LIMITS } from "../constants";
 import { getPreset } from "../api/previews";
 import { ReaderAccessField } from "../components/ReaderAccessField";
+import { ExpectedGuestsField, parseExpectedGuests } from "../components/ExpectedGuestsField";
 import type { Visibility } from "../types/books";
 
 const STEPS = ["Theme", "Details", "Rules"] as const;
@@ -45,10 +46,18 @@ export function Wizard() {
   const [visibility, setVisibility] = useState<Visibility>("link");
   const [photoReq, setPhotoReq] = useState(false);
   const [msgReq, setMsgReq] = useState(true);
+  const [guests, setGuests] = useState(String(LIMITS.expectedGuestsDefault));
   const [showErrors, setShowErrors] = useState(false);
   const [creating, setCreating] = useState(false);
   const [failed, setFailed] = useState(false);
   const [sheet, setSheet] = useState(false);
+
+  // Ask signed-out visitors to sign in before they fill in three steps, not after.
+  useEffect(() => {
+    request("/auth/me").catch((e) => {
+      if (e instanceof ApiError && e.code === "UNAUTHORIZED") navigate("/signin?next=/create");
+    });
+  }, [navigate]);
 
   const look = { theme, font, lines };
   const effectiveSlug = slugEdited ? slug : slugify(title);
@@ -89,6 +98,8 @@ export function Wizard() {
       setShowErrors(false);
       return setStep(step + 1);
     }
+    const expectedGuests = parseExpectedGuests(guests);
+    if (kind === "event" && expectedGuests === undefined) return setShowErrors(true);
     setCreating(true);
     setFailed(false);
     try {
@@ -104,6 +115,7 @@ export function Wizard() {
         access,
         photoRequired: photoReq,
         messageRequired: msgReq,
+        ...(kind === "event" ? { expectedGuests } : {}),
       });
       toast(`${title.trim()} is ready`);
       navigate("/dashboard");
@@ -325,6 +337,7 @@ export function Wizard() {
             ) : kind === "event" ? (
               <>
                 <Heading title="Set the rules" body="Decide what guests share when they join." />
+                <ExpectedGuestsField value={guests} onChange={setGuests} showError={showErrors} />
                 <RadioGroup<Access>
                   label="Guest access"
                   value={access}

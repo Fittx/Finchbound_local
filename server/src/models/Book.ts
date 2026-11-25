@@ -51,6 +51,12 @@ const schema = new Schema(
       default: "not-live",
       required: true,
     },
+    expectedGuests: {
+      type: Number,
+      default: LIMITS.expectedGuestsDefault,
+      min: LIMITS.expectedGuestsMin,
+      max: LIMITS.expectedGuestsMax,
+    },
     entriesCount: { type: Number, default: 0, min: 0, required: true },
     version: { type: Number, default: 0, min: 0, required: true },
     feedSequence: { type: Number, default: 0, required: true },

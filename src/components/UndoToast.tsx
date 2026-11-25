@@ -18,7 +18,9 @@ export function useUndoToast() {
           label: "Undo",
           onClick: () => {
             undone = true;
-            Promise.resolve().then(onUndo).catch(()=>toast("Couldn't undo that change.",{tone:"error"}));
+            Promise.resolve()
+              .then(onUndo)
+              .catch(() => toast("Couldn't undo that change.", { tone: "error" }));
           },
         },
       });

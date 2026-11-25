@@ -6,6 +6,7 @@ import { Book } from "../models/Book.js";
 import { Page } from "../models/Page.js";
 import { Submission } from "../models/Submission.js";
 import { Report } from "../models/Report.js";
+import { PlatformReport } from "../models/PlatformReport.js";
 import { BlockedGuest } from "../models/BlockedGuest.js";
 import { GuestOtp } from "../models/GuestOtp.js";
 import { GuestVerification } from "../models/GuestVerification.js";
@@ -28,6 +29,7 @@ export async function purgeBook(bookId: Types.ObjectId, session: ClientSession) 
   await Page.deleteMany(scope, { session });
   await Submission.deleteMany(scope, { session });
   await Report.deleteMany(scope, { session });
+  await PlatformReport.deleteMany(scope, { session });
   await BlockedGuest.deleteMany(scope, { session });
   await GuestOtp.deleteMany(scope, { session });
   await GuestVerification.deleteMany(scope, { session });

@@ -6,6 +6,7 @@ const HOST_ROUTES = {
   editor: ["Editor", "Editor"],
   reader: ["Reader", "Reader"],
   account: ["Profile", "Account"],
+  admin: ["Admin", "Admin reports"],
   terms: ["Legal", "Terms of service"],
   privacy: ["Legal", "Privacy policy"],
   signin: ["SignIn", "Sign in"],
@@ -46,6 +47,11 @@ export function resolveRoute(path: string[]) {
     if (path.length !== 2) return NOT_FOUND;
   } else if (path.length > 1) return NOT_FOUND;
   return HOST_ROUTES[key as keyof typeof HOST_ROUTES] ?? NOT_FOUND;
+}
+
+/** Only same-site paths are valid after sign-in; anything else goes to the dashboard. */
+export function safeNext(value: string | null | undefined, fallback = "/dashboard") {
+  return value && /^\/(?![/\\])/.test(value) && !/[\u0000-\u001f]/.test(value) ? value : fallback;
 }
 
 /** Keep genuine form/link parameters; preview controls never affect release builds. */

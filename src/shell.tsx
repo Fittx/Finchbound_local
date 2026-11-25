@@ -12,13 +12,7 @@ export function Container({ children, className }: { children: ReactNode; classN
   );
 }
 
-export function TopBar({
-  children,
-  home = "/dashboard",
-}: {
-  children?: ReactNode;
-  home?: string;
-}) {
+export function TopBar({ children, home = "/dashboard" }: { children?: ReactNode; home?: string }) {
   return (
     <header className="sticky top-0 z-40 bg-linen shadow-[0_1px_0_#ECE7DE]">
       <Container className="flex h-16 items-center justify-between gap-4">

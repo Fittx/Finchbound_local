@@ -76,7 +76,9 @@ export const envSchema = z
     RATE_LIMIT_WINDOW_MS: integer(60000, 1000, 3600000),
     RATE_LIMIT_MAX_REQUESTS: integer(120, 1, 10000),
     LOG_LEVEL: z.enum(["info", "warn", "error"]).default("info"),
-    STORAGE_PROVIDER: z.literal("r2").default("r2"),
+    /** `local` keeps uploads on this machine for development; production always uses R2. */
+    STORAGE_PROVIDER: z.enum(["r2", "local"]).default("r2"),
+    STORAGE_LOCAL_DIR: z.string().trim().min(1).default(".local/uploads"),
     STORAGE_ENDPOINT: optionalText,
     STORAGE_REGION: z.string().min(1).default("auto"),
     STORAGE_BUCKET: optionalText,
@@ -100,6 +102,17 @@ export const envSchema = z
     SMTP_USER: optionalText,
     SMTP_PASSWORD: optionalSecret,
     SMTP_FROM: z.preprocess((value) => (value === "" ? undefined : value), z.email().optional()),
+    /** Comma-separated admin emails. The only way to grant the admin role. */
+    ADMIN_EMAILS: z
+      .string()
+      .default("")
+      .transform((value) =>
+        value
+          .split(",")
+          .map((email) => email.trim().toLowerCase())
+          .filter(Boolean),
+      )
+      .pipe(z.array(z.email().max(254)).max(50)),
     TURNSTILE_SECRET: optionalText,
     TURNSTILE_ACTION: z
       .string()
@@ -123,7 +136,15 @@ export const envSchema = z
     const smtpKeys = ["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM"] as const;
     const mailKeys =
       env.EMAIL_PROVIDER === "brevo" ? (["BREVO_API_KEY", "EMAIL_FROM"] as const) : smtpKeys;
-    for (const keys of [storageKeys, mailKeys]) {
+    if (env.NODE_ENV === "production" && env.STORAGE_PROVIDER === "local") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["STORAGE_PROVIDER"],
+        message: "Local storage is for development only",
+      });
+    }
+    const required = env.STORAGE_PROVIDER === "local" ? [mailKeys] : [storageKeys, mailKeys];
+    for (const keys of required) {
       if (env.NODE_ENV === "production" || keys.some((key) => Boolean(env[key]))) {
         for (const key of keys) {
           if (!env[key])

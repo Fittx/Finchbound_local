@@ -21,7 +21,9 @@ export function useOwnedBook(id: string) {
         if (!active) return;
         setBook(undefined);
         if (e instanceof ApiError && e.code === "UNAUTHORIZED")
-          navigate("/signin?next=" + encodeURIComponent(window.location.pathname + window.location.search));
+          navigate(
+            "/signin?next=" + encodeURIComponent(window.location.pathname + window.location.search),
+          );
         else setError(true);
       });
     return () => {

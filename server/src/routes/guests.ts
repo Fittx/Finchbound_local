@@ -5,6 +5,7 @@ import type { AuthService } from "../services/auth.js";
 import type { GuestService } from "../services/guests.js";
 import { guestControllers } from "../controllers/guests.js";
 import { guestDevice } from "../services/guestSecurity.js";
+import type { PER_GUEST } from "../services/guestLimits.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { validate } from "../middleware/validate.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -19,10 +20,15 @@ import {
 export function createGuestRouter(config: Env, auth: AuthService, guests: GuestService): Router {
   const router = Router(),
     handlers = guestControllers(config, guests);
-  const guard = (action: string): RequestHandler =>
+  const guard = (action: keyof typeof PER_GUEST): RequestHandler =>
     asyncHandler(async (req, res, next) => {
       res.locals.guestFingerprint = guestDevice(config, req.get("cookie"), res);
-      await guests.quota(action, req.ip ?? "unknown", res.locals.validated.params.slug);
+      await guests.quota(
+        action,
+        req.ip ?? "unknown",
+        res.locals.validated.params.slug,
+        res.locals.guestFingerprint,
+      );
       next();
     });
   router.get(

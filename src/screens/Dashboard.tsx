@@ -37,6 +37,7 @@ import { LogoutModal } from "../components/LogoutModal";
 import { ConfirmActionModal } from "../components/ConfirmActionModal";
 import { FormAlert } from "../components/FormAlert";
 import { ReaderAccessField } from "../components/ReaderAccessField";
+import { ExpectedGuestsField, parseExpectedGuests } from "../components/ExpectedGuestsField";
 import { getPreset } from "../api/previews";
 import type { Visibility } from "../types/books";
 import { useSession } from "../api/session";
@@ -304,7 +305,10 @@ export function BookCard({
             className="relative z-10 -mt-2 -mr-2 md:hidden"
             label={`Actions for ${book.title}`}
             items={[
-              { label: "Preview", onSelect: () => navigate(`/reader/${book.slug}?preview=${book.id}`) },
+              {
+                label: "Preview",
+                onSelect: () => navigate(`/reader/${book.slug}?preview=${book.id}`),
+              },
               {
                 label: "Edit theme",
                 icon: <Palette className="size-5" aria-hidden="true" />,
@@ -325,7 +329,14 @@ export function BookCard({
         </div>
         <p className="flex items-center gap-2 t-caption text-muted">
           <Link2 className="size-4 shrink-0" aria-hidden="true" />
-          <a className="relative z-10 flex min-h-11 min-w-0 items-center truncate underline" href={book.kind === "event" ? `/${book.slug}/join` : `/reader/${book.slug}`}>{book.kind === "event" ? guestJoinUrl(book.slug).replace(/^https?:\/\//, "") : `${window.location.host}/reader/${book.slug}`}</a>
+          <a
+            className="relative z-10 flex min-h-11 min-w-0 items-center truncate underline"
+            href={book.kind === "event" ? `/${book.slug}/join` : `/reader/${book.slug}`}
+          >
+            {book.kind === "event"
+              ? guestJoinUrl(book.slug).replace(/^https?:\/\//, "")
+              : `${window.location.host}/reader/${book.slug}`}
+          </a>
         </p>
         <div className="flex flex-col gap-1 t-caption">
           <span className="flex items-center gap-2">
@@ -342,7 +353,12 @@ export function BookCard({
             })}
           </span>
         </div>
-        <a href={`/reader/${book.slug}?preview=${book.id}`} className="relative z-10 flex min-h-11 items-center self-start rounded-sm px-3 font-medium underline">Preview</a>
+        <a
+          href={`/reader/${book.slug}?preview=${book.id}`}
+          className="relative z-10 flex min-h-11 items-center self-start rounded-sm px-3 font-medium underline"
+        >
+          Preview
+        </a>
         <div className="relative z-10 mt-auto hidden flex-wrap items-center gap-1 pt-2 md:-ml-3 md:flex">
           <Button
             variant="ghost"
@@ -473,8 +489,10 @@ function SettingsModal({
   const [live, setLive] = useState(book.live);
   const [access, setAccess] = useState<Access>(book.access);
   const [visibility, setVisibility] = useState<Visibility>(book.visibility);
+  const [guests, setGuests] = useState(String(book.expectedGuests ?? LIMITS.expectedGuestsDefault));
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
+  const expectedGuests = parseExpectedGuests(guests);
   const save = async () => {
     setSaving(true);
     setFailed(false);
@@ -485,7 +503,7 @@ function SettingsModal({
         live,
         access,
         visibility,
-        ...(book.kind === "event" ? { status: collection } : {}),
+        ...(book.kind === "event" ? { status: collection, expectedGuests } : {}),
       };
       await updateBookSettings(book, patch);
       onSaved();
@@ -510,7 +528,13 @@ function SettingsModal({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button disabled={!!titleError || !!slugError} loading={saving} onClick={save}>
+          <Button
+            disabled={
+              !!titleError || !!slugError || (book.kind === "event" && expectedGuests === undefined)
+            }
+            loading={saving}
+            onClick={save}
+          >
             {saving ? "Saving" : "Save changes"}
           </Button>
         </>
@@ -553,6 +577,7 @@ function SettingsModal({
             ]}
           />
         )}
+        {book.kind === "event" && <ExpectedGuestsField value={guests} onChange={setGuests} />}
         {book.kind === "event" && (
           <RadioGroup<Access>
             label="Guest access"

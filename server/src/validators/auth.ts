@@ -14,7 +14,10 @@ const loginPassword = z
   .string()
   .min(1)
   .max(256)
-  .refine((value) => Buffer.byteLength(value, "utf8") <= 72, "This password is too long. Try a shorter one.");
+  .refine(
+    (value) => Buffer.byteLength(value, "utf8") <= 72,
+    "This password is too long. Try a shorter one.",
+  );
 export const newPassword = loginPassword.refine(
   passwordMeetsPolicy,
   "Use at least 8 characters including a letter and a number.",

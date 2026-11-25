@@ -1,7 +1,12 @@
 import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import mongoose, { type ClientSession, type Types } from "mongoose";
 import type { Env } from "../config/env.js";
-import type { SessionUser, SignInRequest, SignUpRequest } from "../../../shared/types/auth.js";
+import type {
+  SessionUser,
+  SignInRequest,
+  SignUpRequest,
+  UserRole,
+} from "../../../shared/types/auth.js";
 import { LIMITS } from "../../../shared/constants.js";
 import { isGmailAccountEmail } from "../../../shared/email.js";
 import { User } from "../models/User.js";
@@ -26,12 +31,21 @@ export type AuthPrincipal = {
   userId: string;
   sessionId: string;
   authVersion: number;
+  /** Server-only data for sliding renewal; never sent to the client. */
+  renewal?: { jti: string; lifetime: number; expiresAt: Date };
 };
-export const sessionUser = (user: UserIdentity): SessionUser => ({
+/** Admin is configuration-only: re-derived on every request, never stored or client-supplied. */
+export const roleFor = (config: Pick<Env, "ADMIN_EMAILS">, email: string): UserRole =>
+  config.ADMIN_EMAILS.includes(email.trim().toLowerCase()) ? "admin" : "host";
+export const sessionUser = (
+  user: UserIdentity,
+  config: Pick<Env, "ADMIN_EMAILS">,
+): SessionUser => ({
   id: user._id.toString(),
   name: user.name,
   email: user.email,
   plan: user.plan === "unlimited" ? "Unlimited books" : "Free",
+  role: roleFor(config, user.email),
 });
 const matches = (left: string, right: string) => {
   const a = Buffer.from(left, "hex"),
@@ -85,7 +99,7 @@ export class AuthService {
       ],
       { session },
     );
-    return { user: sessionUser(user), token, remember };
+    return { user: sessionUser(user, this.config), token, remember };
   }
   private backgroundEmail(send: () => Promise<void>) {
     // No recipient, OTP, reset URL, password or provider response goes into logs.
@@ -345,7 +359,31 @@ export class AuthService {
       user.authVersion !== claims.version
     )
       throw new ApiError("UNAUTHORIZED");
-    return { user: sessionUser(user), userId: claims.sub, sessionId, authVersion: claims.version };
+    return {
+      user: sessionUser(user, this.config),
+      userId: claims.sub,
+      sessionId,
+      authVersion: claims.version,
+      renewal: { jti: claims.jti, lifetime: claims.exp - claims.iat, expiresAt: session.expiresAt },
+    };
+  }
+  /**
+   * Sliding expiry for short ("don't keep me signed in") sessions: an active host is not
+   * signed out mid-edit. Remember-me sessions keep their fixed lifetime. Returns a new
+   * token when the session was extended, otherwise undefined.
+   */
+  async renew(principal: AuthPrincipal): Promise<string | undefined> {
+    const short = this.config.JWT_SESSION_MINUTES * 60;
+    const info = principal.renewal;
+    if (!info || info.lifetime > short) return undefined;
+    if (info.expiresAt.getTime() - Date.now() > (short * 1000) / 2) return undefined;
+    const expiresAt = new Date(Date.now() + short * 1000);
+    const changed = await AuthSession.updateOne(
+      { _id: principal.sessionId, authVersion: principal.authVersion, expiresAt: info.expiresAt },
+      { $set: { expiresAt } },
+    );
+    if (!changed.modifiedCount) return undefined;
+    return signSession(this.config, principal.userId, principal.authVersion, info.jti, short);
   }
   async logout(token: string | undefined) {
     if (!token) return;

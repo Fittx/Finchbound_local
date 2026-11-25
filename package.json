@@ -7,6 +7,7 @@
   ],
   "type": "module",
   "scripts": {
+    "local": "node scripts/local.mjs",
     "dev": "vite",
     "build": "vite build && node scripts/check-build.mjs",
     "deploy:build": "npm run typecheck && npm run server:typecheck && npm run build && npm run server:build",
@@ -18,12 +19,12 @@
     "server:build": "npm --prefix server run build",
     "server:typecheck": "npm --prefix server run typecheck",
     "server:test": "npm --prefix server test",
-    "server:test:auth": "npm --prefix server run test:auth",
-    "check:toolchain": "node --test scripts/check-vite-version.test.mjs",
+    "server:test:all": "npm --prefix server run test:all",
+    "setup:env": "npm --prefix server run setup:env",
+    "check:env": "npm --prefix server run check:env",
+    "check:toolchain": "node --test scripts/check-vite-version.test.mjs scripts/check-build.test.mjs",
     "check:frontend": "node scripts/check-scale.mjs",
-    "server:test:books": "npm --prefix server run test:books",
-    "server:db:check": "npm --prefix server run check:db",
-    "server:test:guests": "npm --prefix server run test:guests"
+    "server:db:check": "npm --prefix server run check:db"
   },
   "dependencies": {
     "lucide-react": "^1.70.0",

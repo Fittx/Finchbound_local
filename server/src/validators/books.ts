@@ -46,6 +46,12 @@ export const createBookBody = z.strictObject({
   hosts: z.string().trim().max(LIMITS.bookTitle).optional(),
   prompt: z.string().trim().max(LIMITS.message).optional(),
   status: z.enum(COLLECTION_STATUSES).optional(),
+  expectedGuests: z
+    .number()
+    .int()
+    .min(LIMITS.expectedGuestsMin)
+    .max(LIMITS.expectedGuestsMax)
+    .optional(),
 });
 export const updateBookBody = createBookBody
   .omit({ kind: true })

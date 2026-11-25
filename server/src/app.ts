@@ -1,5 +1,6 @@
 import { createFeedbackRouter } from "./routes/feedback.js";
 import { createAccountRouter } from "./routes/account.js";
+import { createAdminRouter, createPlatformReportRouter } from "./routes/admin.js";
 import { AccountService } from "./services/account.js";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
@@ -87,6 +88,8 @@ export function createApp(options: {
   const auth = new AuthService(config, mailer, logger);
   app.use("/api/account", createAccountRouter(config, auth, new AccountService(config, mailer)));
   app.use("/api/auth", createAuthRouter(config, auth));
+  app.use("/api/admin", createAdminRouter(config, auth));
+  app.use("/api", createPlatformReportRouter(config));
   app.use("/api", createBookRouter(config, auth));
   app.use("/api", createFeedbackRouter(config, auth));
   app.use("/api", createFeedRouter(config, auth, options.streamShutdown));

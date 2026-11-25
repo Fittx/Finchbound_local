@@ -157,6 +157,7 @@ describe("cookie and ownership boundaries", () => {
         name: "Host",
         email: "host@gmail.com",
         plan: "Unlimited books",
+        role: "host",
       },
     };
     expect(() => authorizeOwner(auth, auth.userId)).not.toThrow();

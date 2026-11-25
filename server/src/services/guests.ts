@@ -19,6 +19,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { transaction } from "../utils/transaction.js";
 import { authorizeOwner } from "../middleware/requireOwner.js";
 import { consumeQuota } from "./uploadQuota.js";
+import { PER_GUEST, scaledGuestLimit } from "./guestLimits.js";
 import { verifyUploadToken } from "./uploadTokens.js";
 import { assertGuestNotBlocked, guestEmailToken, verifyGuestEmailToken } from "./guestSecurity.js";
 import { makeCode, digest } from "./tokens.js";
@@ -34,13 +35,20 @@ export class GuestService {
     private readonly config: Env,
     private readonly mailer: AuthMailer,
   ) {}
-  async quota(action: string, ip: string, slug: string) {
-    const limit =
+  /**
+   * One device gets the base limit. The venue IP and the whole book share a ceiling sized
+   * from the host's expected guest count, so a crowd on one Wi-Fi is not one "client".
+   */
+  async quota(action: keyof typeof PER_GUEST, ip: string, slug: string, fingerprint: string) {
+    const base =
       action === "event" || action === "submit"
         ? this.config.RATE_LIMIT_MAX_REQUESTS
         : this.config.AUTH_RATE_LIMIT_MAX_REQUESTS;
-    await consumeQuota(this.config, `guest:${action}:ip:${ip}`, limit);
-    await consumeQuota(this.config, `guest:${action}:book:${slug}`);
+    const book = await Book.findOne({ slug, deletedAt: null }).select("expectedGuests").lean();
+    const shared = scaledGuestLimit(base, book?.expectedGuests, PER_GUEST[action]);
+    await consumeQuota(this.config, `guest:${action}:device:${fingerprint}`, base);
+    await consumeQuota(this.config, `guest:${action}:ip:${ip}`, shared);
+    await consumeQuota(this.config, `guest:${action}:book:${slug}`, shared);
   }
   private async book(slug: string, session?: ClientSession, collecting = false) {
     const book = await Book.findOne({ slug, kind: "event", deletedAt: null }).session(

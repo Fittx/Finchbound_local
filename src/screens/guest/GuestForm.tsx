@@ -180,6 +180,9 @@ function Form({
         icon="lock"
         title="Submissions unavailable"
         body="The host has restricted submissions from this guest."
+        actions={
+          <Button onClick={() => navigate(`/${event.slug}/join`)}>Back to the guestbook</Button>
+        }
       />
     );
   if (rateLimited)
@@ -198,18 +201,23 @@ function Form({
     );
 
   const previewNode = (
-    <GuestPagePreview event={event} name={draft.signoff ?? ""} photo={draft.photo} message={draft.message} />
+    <GuestPagePreview
+      event={event}
+      name={draft.signoff ?? ""}
+      photo={draft.photo}
+      message={draft.message}
+    />
   );
 
   return (
-    <div className="grid gap-8 lg:grid-cols-12 lg:gap-6">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-6">
       <form
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
           submit();
         }}
-        className="flex flex-col gap-6 rounded-lg bg-linen p-5 text-slate shadow-e1 md:p-8 lg:col-span-7"
+        className="flex min-w-0 flex-col gap-6 rounded-lg bg-linen p-5 text-slate shadow-e1 md:p-8 lg:col-span-7"
       >
         <div className="flex flex-col gap-2">
           <h1 className="t-h1">Your page</h1>
@@ -268,7 +276,14 @@ function Form({
             helper="We'll send a code to confirm it. It's never shown in the book."
           />
         )}
-        <Input label="Sign-off name (optional)" value={draft.signoff ?? ""} maxLength={LIMITS.personName} onChange={e => update({ signoff: e.target.value })} placeholder="Name" helper="Leave blank to stay anonymous in the book." />
+        <Input
+          label="Sign-off name (optional)"
+          value={draft.signoff ?? ""}
+          maxLength={LIMITS.personName}
+          onChange={(e) => update({ signoff: e.target.value })}
+          placeholder="Name"
+          helper="Leave blank to stay anonymous in the book."
+        />
         <PhotoUpload
           label={event.photoRequired ? "Photo" : "Photo (optional)"}
           value={draft.photo}

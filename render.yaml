@@ -52,6 +52,8 @@ services:
         sync: false
       - key: TURNSTILE_ACTION
         value: guest-upload
+      - key: ADMIN_EMAILS
+        sync: false
       - key: VITE_TURNSTILE_SITE_KEY
         sync: false
       - key: VITE_TURNSTILE_ACTION

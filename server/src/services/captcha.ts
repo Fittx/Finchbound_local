@@ -1,12 +1,22 @@
 import { z } from "zod";
 import type { Env } from "../config/env.js";
 import { ApiError } from "../utils/ApiError.js";
+import { DEV_CAPTCHA_TOKEN } from "../../../shared/constants.js";
 export interface CaptchaVerifier {
   verify(token: string, ip: string, binding: string): Promise<void>;
 }
+/**
+ * Local development without Turnstile keys accepts this one token so the guest flow can be
+ * exercised. Production refuses to start without TURNSTILE_SECRET, and tests use "test".
+ */
+export { DEV_CAPTCHA_TOKEN };
 export function createCaptchaVerifier(config: Env, fetcher: typeof fetch = fetch): CaptchaVerifier {
   return {
     async verify(token, ip, binding) {
+      if (!config.TURNSTILE_SECRET && config.NODE_ENV === "development") {
+        if (token === DEV_CAPTCHA_TOKEN) return;
+        throw new ApiError("CAPTCHA_FAILED", "Human verification failed.");
+      }
       if (!config.TURNSTILE_SECRET)
         throw new ApiError("SERVER", "Human verification is not configured.", undefined, 503);
       try {

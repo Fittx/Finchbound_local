@@ -1,11 +1,15 @@
 /** Largest fitting prefix, preferring nearby sentence ends, then complete words. */
 export function takePage(text: string, fits: (text: string) => boolean): string {
   const chars = Array.from(text);
-  let low = 1, high = chars.length, fit = 0;
+  let low = 1,
+    high = chars.length,
+    fit = 0;
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
-    if (fits(chars.slice(0, mid).join(""))) { fit = mid; low = mid + 1; }
-    else high = mid - 1;
+    if (fits(chars.slice(0, mid).join(""))) {
+      fit = mid;
+      low = mid + 1;
+    } else high = mid - 1;
   }
   if (!fit && text) throw new Error("The page has no room for a character.");
   let part = chars.slice(0, fit).join("");
@@ -26,7 +30,8 @@ export function paginateText(text: string, fits: (text: string) => boolean): str
   let remaining = text;
   while (remaining) {
     const part = takePage(remaining, fits);
-    result.push(part); remaining = remaining.slice(part.length);
+    result.push(part);
+    remaining = remaining.slice(part.length);
   }
   return result.length ? result : [""];
 }
@@ -36,5 +41,7 @@ export function bookPageLabel(index: number, pageCount: number, singlePage = fal
   if (!pageCount) return "Page 0 of 0";
   const first = (singlePage ? index : index * 2) + 1;
   const last = Math.min(pageCount, first + (singlePage ? 0 : 1));
-  return first === last ? `Page ${first} of ${pageCount}` : `Pages ${first}\u2013${last} of ${pageCount}`;
+  return first === last
+    ? `Page ${first} of ${pageCount}`
+    : `Pages ${first}\u2013${last} of ${pageCount}`;
 }

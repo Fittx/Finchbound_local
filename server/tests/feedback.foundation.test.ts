@@ -8,19 +8,39 @@ import { testConfig, testLogger } from "./helpers.js";
 
 describe("private feedback and signatures", () => {
   it("bounds messages and rejects privileged fields", () => {
-    expect(feedbackBody.parse({ message: " Thank you " })).toEqual({ name: "", message: "Thank you" });
-    for (const body of [{ message: " " }, { message: "a".repeat(1001) }, { message: "Hi", bookId: "foreign" }, { message: { $ne: null } }])
+    expect(feedbackBody.parse({ message: " Thank you " })).toEqual({
+      name: "",
+      message: "Thank you",
+    });
+    for (const body of [
+      { message: " " },
+      { message: "a".repeat(1001) },
+      { message: "Hi", bookId: "foreign" },
+      { message: { $ne: null } },
+    ])
       expect(feedbackBody.safeParse(body).success).toBe(false);
   });
   it("authenticates before querying the inbox", async () => {
     const find = vi.spyOn(Feedback, "find");
-    const app = createApp({ config: testConfig(), isDatabaseReady: () => true, logger: testLogger() });
-    await request(app).get("/api/books/" + "a".repeat(24) + "/feedback").expect(401);
+    const app = createApp({
+      config: testConfig(),
+      isDatabaseReady: () => true,
+      logger: testLogger(),
+    });
+    await request(app)
+      .get("/api/books/" + "a".repeat(24) + "/feedback")
+      .expect(401);
     expect(find).not.toHaveBeenCalled();
     find.mockRestore();
   });
   it("allows an anonymous sign-off without removing the manager's required guest identity", () => {
-    const entry = guestEntryBody.parse({ name: "Guest", email: "", message: "Hello", captcha: "proof", signoff: "" });
+    const entry = guestEntryBody.parse({
+      name: "Guest",
+      email: "",
+      message: "Hello",
+      captcha: "proof",
+      signoff: "",
+    });
     expect(entry.name).toBe("Guest");
     expect(entry.signoff).toBe("");
     expect(guestEntryBody.parse({ ...entry, signoff: " Ava " }).signoff).toBe("Ava");

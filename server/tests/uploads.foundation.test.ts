@@ -115,18 +115,16 @@ describe("image processing and upload security", () => {
         createCaptchaVerifier(configured, fetcher).verify("proof", "127.0.0.1", "book_draft"),
       ).rejects.toMatchObject({ code: "CAPTCHA_FAILED" });
     }
-    const fetcher = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            success: true,
-            hostname: "127.0.0.1",
-            action: configured.TURNSTILE_ACTION,
-            cdata: "book_draft",
-          }),
-        ),
-      );
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          hostname: "127.0.0.1",
+          action: configured.TURNSTILE_ACTION,
+          cdata: "book_draft",
+        }),
+      ),
+    );
     await createCaptchaVerifier(configured, fetcher).verify("proof", "127.0.0.1", "book_draft");
     expect(fetcher.mock.calls[0]![0]).toBe(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",

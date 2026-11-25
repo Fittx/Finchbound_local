@@ -118,7 +118,8 @@ integration("auth with real MongoDB transactions, bcrypt and JWT", () => {
     expect(rawOtp!.codeHash).not.toBe(lastCode());
     await post("login", { email, password, remember: false }).expect(401);
     const verified = await post("verify-email", { email, code: lastCode() }).expect(200);
-    expect(Object.keys(verified.body.user).sort()).toEqual(["email", "id", "name", "plan"]);
+    expect(Object.keys(verified.body.user).sort()).toEqual(["email", "id", "name", "plan", "role"]);
+    expect(verified.body.user.role).toBe("host");
     expect(verified.body).not.toHaveProperty("token");
     const signed = await post("login", { email, password, remember: true }).expect(200);
     expect(signed.headers["set-cookie"]![0]).toContain("Max-Age=2592000");

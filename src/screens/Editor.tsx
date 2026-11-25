@@ -30,6 +30,7 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowUp,
+  Eye,
   GripVertical,
   ImagePlus,
   Pencil,
@@ -257,7 +258,7 @@ export function Editor() {
         <div
           role="toolbar"
           aria-label="Editor controls"
-          className="mx-auto flex max-w-[1280px] items-center gap-1 rounded-lg bg-linen p-2 shadow-e2 md:gap-2"
+          className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-1 rounded-lg bg-linen p-2 shadow-e2 md:flex-nowrap md:gap-2"
         >
           <Button
             variant="ghost"
@@ -270,8 +271,9 @@ export function Editor() {
               {book.kind === "event" ? "Back to hub" : "Back to books"}
             </span>
           </Button>
-          <div className="flex min-w-0 flex-1 flex-col px-1 md:px-2">
-            <span className="truncate t-body font-bold">{book.title}</span>
+          {/* On phones the title takes the first row and the actions wrap below it. */}
+          <div className="flex min-w-0 flex-1 flex-col px-1 max-md:basis-[calc(100%-3.25rem)] md:px-2">
+            <h1 className="truncate t-body font-bold">{book.title}</h1>
             <span className="truncate t-caption whitespace-nowrap text-muted">
               <Status live={book.live} />
               <span className="hidden md:inline">
@@ -280,8 +282,16 @@ export function Editor() {
               </span>
             </span>
           </div>
-          <BookFeedback bookId={book.id} />
-          <Button variant="secondary" onClick={() => navigate(`/reader/${book.slug}?preview=${book.id}`)}>Preview</Button>
+          <BookFeedback bookId={book.id} compact />
+          <Button
+            variant="secondary"
+            className="max-md:w-11 max-md:px-0"
+            icon={<Eye className="size-5" aria-hidden="true" />}
+            aria-label="Preview"
+            onClick={() => navigate(`/reader/${book.slug}?preview=${book.id}`)}
+          >
+            <span className="hidden md:inline">Preview</span>
+          </Button>
           <ExportBookButton book={book} pages={pages} />
           <Button
             variant="secondary"
@@ -294,10 +304,12 @@ export function Editor() {
           </Button>
           <Button
             onClick={() => setPublish("confirm")}
-            disabled={state !== "default"}
+            // Pages of a live book update for readers as you save, so there is nothing to republish.
+            disabled={state !== "default" || book.live}
+            title={book.live ? "This book is live. Changes appear as you save them." : undefined}
             className="max-md:px-4"
           >
-            Publish nest
+            {book.live ? "Published" : "Publish nest"}
           </Button>
         </div>
       </div>
@@ -747,9 +759,7 @@ function PageModal({
   const [title, setTitle] = useState(page?.title ?? "");
   const [image, setImage] = useState<string | undefined>(page?.image);
   const [cardImage, setCardImage] = useState<string | undefined>(page?.cardImage);
-  const [crop, setCrop] = useState<string | null>(
-    null,
-  );
+  const [crop, setCrop] = useState<string | null>(null);
   const [caption, setCaption] = useState(page?.caption ?? "");
   const [header, setHeader] = useState(page?.header ?? "");
   const [body, setBody] = useState(page?.body ?? "");
@@ -836,8 +846,14 @@ function PageModal({
       }
     >
       <div className="flex flex-col gap-6">
-        <Input label="Sign-off name (optional)" value={author} max={LIMITS.personName}
-          onChange={e => setAuthor(e.target.value)} placeholder="Name" helper="Leave blank to stay anonymous." />
+        <Input
+          label="Sign-off name (optional)"
+          value={author}
+          max={LIMITS.personName}
+          onChange={(e) => setAuthor(e.target.value)}
+          placeholder="Name"
+          helper="Leave blank to stay anonymous."
+        />
         <Input
           label="Page title"
           value={title}
@@ -929,9 +945,13 @@ function PageModal({
           <input
             ref={input}
             type="file"
-            accept={ACCEPTED_IMAGE_TYPES.join(",")}
+            accept={[...ACCEPTED_IMAGE_TYPES, ".heic", ".heif"].join(",")}
             className="hidden"
-            onChange={(e) => take(e.target.files?.[0] ?? undefined)}
+            onChange={(e) => {
+              take(e.target.files?.[0] ?? undefined);
+              // Allow choosing the same file again after Cancel or an error.
+              e.target.value = "";
+            }}
           />
         </div>
         <Input

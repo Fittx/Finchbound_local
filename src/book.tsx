@@ -217,11 +217,29 @@ export function RightContent({
   compact?: boolean;
 }) {
   if (!page) return null;
-  return <div className={cx("flex size-full flex-col pr-8 pl-16", compact ? "py-4" : "py-10")}>
-    {(page.header || page.title) && <h3 className="mb-4" style={{ ...bookFont(look.font, 28), lineHeight: "32px", color: look.theme.header }}>{page.header || page.title}</h3>}
-    <p className="whitespace-pre-wrap break-words" style={{ ...bookFont(look.font, 18), lineHeight: "32px", color: look.theme.text }}>{page.body}</p>
-    {page.author && <p style={{ ...bookFont(look.font, 18), lineHeight: "32px", color: look.theme.text }}>- {page.author}</p>}
-  </div>;
+  return (
+    <div className={cx("flex size-full flex-col pr-8 pl-16", compact ? "py-4" : "py-10")}>
+      {(page.header || page.title) && (
+        <h3
+          className="mb-4"
+          style={{ ...bookFont(look.font, 28), lineHeight: "32px", color: look.theme.header }}
+        >
+          {page.header || page.title}
+        </h3>
+      )}
+      <p
+        className="whitespace-pre-wrap break-words"
+        style={{ ...bookFont(look.font, 18), lineHeight: "32px", color: look.theme.text }}
+      >
+        {page.body}
+      </p>
+      {page.author && (
+        <p style={{ ...bookFont(look.font, 18), lineHeight: "32px", color: look.theme.text }}>
+          - {page.author}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export const TURN_MS = 760;

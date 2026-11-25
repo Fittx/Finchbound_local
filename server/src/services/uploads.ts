@@ -12,6 +12,7 @@ import { Book } from "../models/Book.js";
 import { Upload } from "../models/Upload.js";
 import { UploadGrant } from "../models/UploadGrant.js";
 import { consumeQuota } from "./uploadQuota.js";
+import { PER_GUEST, scaledGuestLimit } from "./guestLimits.js";
 import { signUploadToken, verifyUploadToken, type UploadClaims } from "./uploadTokens.js";
 import { processImage, type RenditionName } from "./images.js";
 import { assetUrl } from "./assetReferences.js";
@@ -21,8 +22,14 @@ import type { UploadedImage } from "../middleware/upload.js";
 import { assertGuestNotBlocked } from "./guestSecurity.js";
 import { Submission } from "../models/Submission.js";
 export type UploadIdentity =
-  | { ownerId: string; bookId?: never; draftId?: never; grant?: never }
-  | { ownerId?: never; bookId: string; draftId: string; grant: string };
+  | { ownerId: string; bookId?: never; draftId?: never; grant?: never; expectedGuests?: never }
+  | {
+      ownerId?: never;
+      bookId: string;
+      draftId: string;
+      grant: string;
+      expectedGuests?: number | null;
+    };
 export class UploadService {
   constructor(
     private readonly config: Env,
@@ -39,14 +46,17 @@ export class UploadService {
   }
   async issue(input: CaptchaInput, ip: string, fingerprint: string) {
     this.storage.assertConfigured();
-    await consumeQuota(this.config, "captcha:ip:" + ip);
+    const base = this.config.RATE_LIMIT_MAX_REQUESTS;
+    await consumeQuota(this.config, "captcha:device:" + fingerprint, base);
     const book = await Book.findOne({ slug: input.bookSlug, deletedAt: null, kind: "event" });
+    const shared = scaledGuestLimit(base, book?.expectedGuests, PER_GUEST.captcha);
+    await consumeQuota(this.config, "captcha:ip:" + ip, shared);
     if (!book) throw new ApiError("NOT_FOUND");
     await this.openBook(book._id.toString());
     await assertGuestNotBlocked(book._id, { fingerprint });
     if (await Submission.exists({ bookId: book._id, draftId: input.draftId }))
       throw new ApiError("CONFLICT", "Start a new draft to submit another entry.");
-    await consumeQuota(this.config, "captcha:book:" + book._id);
+    await consumeQuota(this.config, "captcha:book:" + book._id, shared);
     await this.captcha.verify(input.token, ip, input.bookSlug + "_" + input.draftId);
     const grant = randomUUID(),
       expiresAt = new Date(Date.now() + this.config.UPLOAD_TOKEN_TTL_SECONDS * 1000);
@@ -73,7 +83,7 @@ export class UploadService {
   }
   async guestIdentity(token: string): Promise<UploadIdentity> {
     const claims = verifyUploadToken(this.config, token, "guest-upload");
-    await this.openBook(claims.bookId);
+    const book = await this.openBook(claims.bookId);
     const grant = await UploadGrant.findOneAndUpdate(
       {
         _id: claims.jti,
@@ -88,14 +98,28 @@ export class UploadService {
     if (!grant)
       throw new ApiError("RATE_LIMITED", "Upload authorization expired or its limit was reached.");
     await assertGuestNotBlocked(grant.bookId, { fingerprint: grant.fingerprint });
-    return { bookId: claims.bookId, draftId: claims.draftId, grant: claims.jti };
+    return {
+      bookId: claims.bookId,
+      draftId: claims.draftId,
+      grant: claims.jti,
+      expectedGuests: book.expectedGuests ?? null,
+    };
   }
   async quota(identity: UploadIdentity, ip: string) {
     this.storage.assertConfigured();
-    await consumeQuota(this.config, "upload:ip:" + ip);
+    // Guests at one venue share an IP; their ceiling scales with the event size.
+    const limit = identity.ownerId
+      ? this.config.RATE_LIMIT_MAX_REQUESTS
+      : scaledGuestLimit(
+          this.config.RATE_LIMIT_MAX_REQUESTS,
+          identity.expectedGuests,
+          this.config.UPLOAD_MAX_PER_DRAFT,
+        );
+    await consumeQuota(this.config, "upload:ip:" + ip, limit);
     await consumeQuota(
       this.config,
       identity.ownerId ? "upload:owner:" + identity.ownerId : "upload:book:" + identity.bookId,
+      limit,
     );
     if (identity.bookId)
       await consumeQuota(
@@ -211,7 +235,10 @@ export class UploadService {
   async read(id: string, size: RenditionName, auth?: AuthPrincipal, previewToken?: string) {
     const upload = await Upload.findOne({ _id: id, status: "ready" });
     if (!upload) throw new ApiError("NOT_FOUND");
-    let allowed = Boolean(auth && upload.ownerId && auth.userId === upload.ownerId.toString());
+    // Admins review reported photos; the role is re-derived from server config per request.
+    let allowed =
+      auth?.user.role === "admin" ||
+      Boolean(auth && upload.ownerId && auth.userId === upload.ownerId.toString());
     if (!allowed && previewToken) {
       const claims = verifyUploadToken(this.config, previewToken, "asset-preview");
       allowed =

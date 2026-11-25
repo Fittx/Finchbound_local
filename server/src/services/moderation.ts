@@ -362,18 +362,23 @@ export class ModerationService {
   }
 
   remove(auth: AuthPrincipal, id: string) {
-    return withEntry(auth, id, "submission:deleted", async (entry, book, session) => {
-      const scope = { bookId: book._id, submissionId: entry._id };
-      await Page.deleteMany(scope, { session });
-      await Report.deleteMany(scope, { session });
-      await Upload.updateMany(
-        { ...scope, ownerId: null },
-        { $set: { status: "failed", cleanupNeeded: true } },
-        { session },
-      );
-      await entry.deleteOne({ session });
-      if (entry.status === "in-book") book.version++;
-      book.entriesCount = Math.max(0, book.entriesCount - 1);
-    });
+    return withEntry(auth, id, "submission:deleted", (entry, book, session) =>
+      deleteEntry(entry, book, session),
+    );
   }
+}
+
+/** Remove an entry, its page, host reports and photo. Caller authorizes, publishes and saves the book. */
+export async function deleteEntry(entry: Entry, book: Parent, session: ClientSession) {
+  const scope = { bookId: book._id, submissionId: entry._id };
+  await Page.deleteMany(scope, { session });
+  await Report.deleteMany(scope, { session });
+  await Upload.updateMany(
+    { ...scope, ownerId: null },
+    { $set: { status: "failed", cleanupNeeded: true } },
+    { session },
+  );
+  await entry.deleteOne({ session });
+  if (entry.status === "in-book") book.version++;
+  book.entriesCount = Math.max(0, book.entriesCount - 1);
 }

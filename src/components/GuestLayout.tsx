@@ -26,6 +26,7 @@ export function GuestLayout({
   className?: string;
 }) {
   const [report, setReport] = useState(!!reportOpen);
+  const [platformReport, setPlatformReport] = useState(false);
   const bg = event?.theme.background ?? "#FDFBF7";
   const fg = readableOn(bg);
   return (
@@ -56,17 +57,32 @@ export function GuestLayout({
           Made with Finchbound
         </a>
         {event && (
-          <button
-            type="button"
-            onClick={() => setReport(true)}
-            className="flex min-h-11 items-center gap-2 rounded-sm px-2 t-caption font-medium underline decoration-2 underline-offset-4 hover:no-underline"
-          >
-            <Flag className="size-4" aria-hidden="true" />
-            Report content
-          </button>
+          <div className="flex flex-wrap items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setReport(true)}
+              className="flex min-h-11 items-center gap-2 rounded-sm px-2 t-caption font-medium underline decoration-2 underline-offset-4 hover:no-underline"
+            >
+              <Flag className="size-4" aria-hidden="true" />
+              Report content
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlatformReport(true)}
+              className="flex min-h-11 items-center rounded-sm px-2 t-caption font-medium underline decoration-2 underline-offset-4 hover:no-underline"
+            >
+              Report to Finchbound
+            </button>
+          </div>
         )}
       </footer>
       <ReportContentModal open={report} onClose={() => setReport(false)} slug={slug} />
+      <ReportContentModal
+        open={platformReport}
+        onClose={() => setPlatformReport(false)}
+        slug={slug}
+        target="platform"
+      />
     </div>
   );
 }

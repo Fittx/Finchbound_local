@@ -54,6 +54,8 @@ export type Book = {
   hosts?: string;
   prompt?: string;
   status?: "open" | "not-live" | "closed";
+  /** Expected event size; scales per-book guest rate limits. */
+  expectedGuests?: number;
   pages: Page[];
 };
 
@@ -79,6 +81,7 @@ export type UpdateBookRequest = Partial<
     | "hosts"
     | "prompt"
     | "status"
+    | "expectedGuests"
   >
 >;
 /** Trusted IDs, timestamps and submission associations are server-controlled. */

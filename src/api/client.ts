@@ -1,4 +1,5 @@
 import type { ApiErrorBody, ApiErrorCode } from "../types/api";
+import { getSessionSnapshot } from "./session";
 
 export type { ApiErrorCode };
 
@@ -28,19 +29,6 @@ export class ApiError extends Error {
 /** Preview hook: frames pass ?variant= through to force an outcome. */
 export type Simulate = string | null | undefined;
 
-const wait = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
-
-export async function respond<T>(
-  fn: () => T,
-  opts: { ms?: number; simulate?: Simulate } = {},
-): Promise<T> {
-  if (opts.simulate === "loading") return new Promise<T>(() => {});
-  await wait(opts.ms ?? 700);
-  if (opts.simulate === "offline" || !navigator.onLine) throw new ApiError("OFFLINE");
-  if (opts.simulate === "server-error") throw new ApiError("SERVER");
-  return fn();
-}
-
 /** Send cookie-authenticated requests through the same-origin API. */
 export async function request<T>(
   path: string,
@@ -69,9 +57,22 @@ export async function request<T>(
   const result = await response.json().catch(() => {
     throw new ApiError("SERVER");
   });
-  if (!response.ok) throw result?.error?.code ? ApiError.fromBody(result) : new ApiError("SERVER");
+  if (!response.ok) {
+    const error = result?.error?.code ? ApiError.fromBody(result) : new ApiError("SERVER");
+    // A signed-in host lost their session mid-task: tell the app once, centrally.
+    if (
+      error.code === "UNAUTHORIZED" &&
+      !bearer &&
+      !path.startsWith("/auth/") &&
+      !path.startsWith("/public/") &&
+      getSessionSnapshot()
+    )
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    throw error;
+  }
   return result;
 }
+export const SESSION_EXPIRED_EVENT = "finchbound:session-expired";
 
 export function queryString(query: Record<string, string | number | boolean | null | undefined>) {
   const params = new URLSearchParams();

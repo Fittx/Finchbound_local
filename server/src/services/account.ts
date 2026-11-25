@@ -54,7 +54,7 @@ export class AccountService {
         );
       }
       await user.save({ session });
-      return { user: sessionUser(user), changed };
+      return { user: sessionUser(user, this.config), changed };
     });
     if (result.changed) {
       try {

@@ -1,4 +1,5 @@
-export type SessionUser = { id: string; name: string; email: string; plan: string };
+export type UserRole = "host" | "admin";
+export type SessionUser = { id: string; name: string; email: string; plan: string; role: UserRole };
 
 export type SignInRequest = { email: string; password: string; remember: boolean };
 export type SignInResponse = { user: SessionUser };

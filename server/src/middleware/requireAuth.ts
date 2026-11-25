@@ -3,11 +3,14 @@ import type { Env } from "../config/env.js";
 import type { AuthPrincipal, AuthService } from "../services/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { readSessionCookie } from "../utils/cookies.js";
+import { readSessionCookie, setSessionCookie } from "../utils/cookies.js";
 
 export function requireAuth(config: Env, auth: AuthService): RequestHandler {
   return asyncHandler(async (req, res, next) => {
-    res.locals.auth = await auth.authenticate(readSessionCookie(req.get("cookie"), config));
+    const principal = await auth.authenticate(readSessionCookie(req.get("cookie"), config));
+    res.locals.auth = principal;
+    const renewed = await auth.renew(principal);
+    if (renewed) setSessionCookie(res, config, renewed, false);
     next();
   });
 }

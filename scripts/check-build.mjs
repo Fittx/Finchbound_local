@@ -26,13 +26,17 @@ export function checkBuild(directory = "dist") {
   });
   if (!files.length) throw new Error("No built JavaScript found. Run the Vite build first.");
   if (invalid.length)
-    throw new Error("Invalid generated JavaScript: " + invalid.map((file) => relative(root, file)).join(", "));
+    throw new Error(
+      "Invalid generated JavaScript: " + invalid.map((file) => relative(root, file)).join(", "),
+    );
   return files.length;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
-    console.log(`Build syntax check: PASS (${checkBuild(process.argv[2] || "dist")} JavaScript files)`);
+    console.log(
+      `Build syntax check: PASS (${checkBuild(process.argv[2] || "dist")} JavaScript files)`,
+    );
   } catch (error) {
     console.error(error instanceof Error ? error.message : "Build syntax check failed");
     process.exitCode = 1;

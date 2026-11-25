@@ -64,6 +64,7 @@ export const bookDto = (b: StoredBook): Omit<BookDto, "pages"> => ({
   hosts: b.hosts ?? "",
   prompt: b.prompt ?? "",
   status: b.collectionStatus,
+  expectedGuests: b.expectedGuests ?? LIMITS.expectedGuestsDefault,
 });
 export class BookService {
   private readonly cursors: CursorCodec;
