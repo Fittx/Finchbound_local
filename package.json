@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "local": "node scripts/local.mjs",
+    "local:lan": "node scripts/local.mjs --lan",
     "dev": "vite",
     "build": "vite build && node scripts/check-build.mjs",
     "deploy:build": "npm run typecheck && npm run server:typecheck && npm run build && npm run server:build",

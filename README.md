@@ -45,6 +45,20 @@ email in `ADMIN_EMAILS`, then check the settings and the email connection:
 npm run check:env
 ```
 
+### Test on phones over your Wi-Fi
+
+Double-click **`start-local-network.cmd`**, or run `npm run local:lan`. It prints an address such
+as `http://192.168.1.7:5173`. Open that address on the PC **and** on phones connected to the
+same Wi-Fi (sign-in and saving only work from that address, not from 127.0.0.1 in this mode).
+Book links and QR codes in the Hub use that address, so guests can scan them with their phones.
+
+- If phones can't load the page, allow **Node.js** on **Private networks** when Windows Firewall
+  asks (or in Windows Security > Firewall > Allow an app).
+- Public or guest Wi-Fi often blocks devices from reaching each other; use a home network or
+  a phone hotspot.
+- To pick a different network address, set `LAN_IP` first: `$env:LAN_IP="192.168.1.7"; npm run local:lan`.
+- Only the website listens on the network. The API and database stay private to this PC.
+
 ### Manually, in three windows
 
 ```powershell

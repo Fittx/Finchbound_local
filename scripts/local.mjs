@@ -5,6 +5,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync } from "node:fs";
 import { createConnection } from "node:net";
+import { networkInterfaces } from "node:os";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 
@@ -148,8 +149,46 @@ for (const [name, port] of [
     console.error(`[setup] Port ${port} is already in use. Close the other ${name} window first.`);
     stop(1);
   }
-run("api", npm, ["--prefix", "server", "run", "dev"]);
-run("web", npm, ["run", "dev"]);
+// --lan: let phones on the same Wi-Fi open the site. Only the website listens on the network;
+// the API and database stay on this computer and are reached through the website's /api proxy.
+// The API's trusted origin becomes the network address, so use that address on this PC too.
+const lanIp = process.argv.includes("--lan") ? findLanAddress() : undefined;
+if (process.argv.includes("--lan") && !lanIp) {
+  console.error("[setup] No Wi-Fi or Ethernet address found. Connect to a network first.");
+  stop(1);
+}
+const site = lanIp ? `http://${lanIp}:5173` : "http://127.0.0.1:5173";
+run(
+  "api",
+  npm,
+  ["--prefix", "server", "run", "dev"],
+  lanIp ? { env: { ...process.env, CLIENT_URL: site } } : {},
+);
+run("web", npm, lanIp ? ["run", "dev", "--", "--host", "0.0.0.0"] : ["run", "dev"]);
 for (let i = 0; i < 60 && !((await open(3001)) && (await open(5173))); i++) await wait(1000);
-console.log("\n  Finchbound is running: http://127.0.0.1:5173");
+console.log("\n  Finchbound is running: " + site);
+if (lanIp) {
+  console.log("  Phones on the same Wi-Fi: open " + site + " or scan a book's QR code.");
+  console.log(
+    "  Use this address on this PC too (not 127.0.0.1), or sign-in and saving will fail.",
+  );
+  console.log("  If phones can't connect, allow Node.js on Private networks in Windows Firewall.");
+}
 console.log("  Press Ctrl+C to stop.\n");
+
+// Set LAN_IP to choose an address yourself. Otherwise prefer Wi-Fi, then wired Ethernet, and skip
+// virtual adapters (VirtualBox uses 192.168.56.x, which phones cannot reach).
+function findLanAddress() {
+  if (process.env.LAN_IP) return process.env.LAN_IP;
+  const candidates = Object.entries(networkInterfaces())
+    .filter(([name]) => !/vethernet|virtual|vmware|vbox|wsl|docker|loopback|bluetooth/i.test(name))
+    .flatMap(([name, list]) =>
+      (list ?? [])
+        .filter((a) => a.family === "IPv4" && !a.internal && !a.address.startsWith("192.168.56."))
+        .map((a) => ({ name, ip: a.address })),
+    );
+  const rank = ({ name, ip }) =>
+    (/wi-?fi|wlan|wireless/i.test(name) ? 0 : /ethernet|^eth|^en/i.test(name) ? 1 : 2) * 10 +
+    (/^192\.168\./.test(ip) ? 0 : /^10\./.test(ip) ? 1 : 2);
+  return candidates.sort((a, b) => rank(a) - rank(b))[0]?.ip;
+}
